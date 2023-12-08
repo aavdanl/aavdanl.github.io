@@ -1,9 +1,9 @@
 ---
 title: "Beer Markets"
-author: "Byeong-Hak Choe"
+author: "Alex Ventresca"
 date: "2023-11-02"
 categories: [beer, code, data-analysis]
-image: "image.png"
+image: "beermarket.jpg"
 
 execute: 
   warning: false
