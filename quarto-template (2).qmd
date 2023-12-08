@@ -71,7 +71,7 @@ The number of variables is `r nvars`; the number of observations is `r nobs`.
 
 # Introduction
 
-- Why does your project matter?
+- Why does your project matter? intro example
 
 - Motivate your project.
 
