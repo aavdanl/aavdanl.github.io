@@ -3,7 +3,7 @@ title: "Restaurant"
 author: "Alex Ventresca"
 date: "2023-10-30"
 categories: [starwars, code, analysis]
-image: "image.png"
+image: "restaurant1.jpg"
 
 execute: 
   warning: false
