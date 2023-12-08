@@ -2,7 +2,11 @@
 title: DANL Project
 subtitle: "Data-Driven Mastery: Unlocking Business Potential"
 author: 
+<<<<<<< HEAD
   - Alex Ventresca
+=======
+  - Name 1
+>>>>>>> f9be2829e39bbaaccd2df8eebb7eb9ec2263a719
   - Name 2
   - Name 3
   - Name 4
