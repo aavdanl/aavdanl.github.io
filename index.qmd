@@ -2,9 +2,9 @@
 title: "Alex Ventresca"
 about:
   template: trestles  # jolla  trestles  solana  marquee  broadside
-  image: img/profile.png
-  image-width: 15em
-  image-shape: round # rectangle  round  rounded
+  image: profilepicture.jpg
+  image-width: 15cm
+  image-shape: rectangle # rectangle  round  rounded
   
   links:
     - icon: linkedin
@@ -26,16 +26,15 @@ about:
 ---
 
 
-Finley Malloc majors in Data Analytics at SUNY Geneseo. When not working on data analytics, Finley enjoys spending time unicycling and playing with her pet iguana.
+Alex Ventresca majors in Economics and Sustainability Studies at SUNY Geneseo. Outside of academics, Alex runs cross country and track and enjoys reading and spending time with family and friends.
 
 ## Education
 
 State University of New York at Geneseo | Geneseo, NY <br>
-B.S. in Data Analytics | Aug 2022 - May 2026 <br>
-Minor in Business Administration 
+B.A. in Economics & Sustainability Studies | Aug 2021 - May 2025 <br>
 
 ## Experience
 
-Starbucks Analytics | Data Analyst Intern | May 2024 - Aug 2024
+Wegmans Management Intern | Feb 2019 - Current
 
 
