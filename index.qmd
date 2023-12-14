@@ -2,7 +2,7 @@
 title: "Alex Ventresca"
 about:
   template: trestles  # jolla  trestles  solana  marquee  broadside
-  image: pfp.PNG
+  image: pfp.png
   image-width: 15em
   image-shape: rectangle # rectangle  round  rounded
   

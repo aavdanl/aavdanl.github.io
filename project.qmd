@@ -94,7 +94,7 @@ rmarkdown::paged_table(climate_finance)
 
 
 ```{r}
-skim(mpg) %>% 
+skim(climate_finance) %>% 
   select(-n_missing)
 ```
 
