@@ -112,11 +112,32 @@
     "text": "3.1 Summary Statistics\n\npath <- 'https://bcdanl.github.io/data/climate_finance_energy.csv'\nclimate_finance <- read_csv(path)\n\n#| results: asis\n#| echo: false\nrmarkdown::paged_table(climate_finance) \n\n\n\n  \n\n\n\n\nskim(climate_finance) %>% \n  select(-n_missing)\n\n\nData summary\n\n\nName\nclimate_finance\n\n\nNumber of rows\n16853\n\n\nNumber of columns\n8\n\n\n_______________________\n\n\n\nColumn type frequency:\n\n\n\ncharacter\n5\n\n\nlogical\n1\n\n\nnumeric\n2\n\n\n________________________\n\n\n\nGroup variables\nNone\n\n\n\nVariable type: character\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\ncomplete_rate\nmin\nmax\nempty\nn_unique\nwhitespace\n\n\n\n\nParty\n1.00\n5\n24\n0\n34\n0\n\n\nRecipient country/region\n1.00\n3\n293\n0\n1310\n0\n\n\nProject/programme/activity\n0.68\n3\n1473\n0\n7908\n0\n\n\nType of support\n1.00\n10\n10\n0\n2\n0\n\n\nStatus\n1.00\n8\n9\n0\n2\n0\n\n\n\nVariable type: logical\n\n\n\nskim_variable\ncomplete_rate\nmean\ncount\n\n\n\n\nEnergy\n1\n0.19\nFAL: 13710, TRU: 3143\n\n\n\nVariable type: numeric\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\ncomplete_rate\nmean\nsd\np0\np25\np50\np75\np100\nhist\n\n\n\n\nYear\n1\n2015.72\n1.82\n2011\n2015\n2016\n2017\n2018\n▁▂▆▅▇\n\n\nContribution\n1\n3311433.39\n9714907.28\n3000\n100000\n420000\n2200000\n100000000\n▇▁▁▁▁"
   },
   {
-    "objectID": "project.html#mpg-and-a-type-of-cars",
-    "href": "project.html#mpg-and-a-type-of-cars",
+    "objectID": "project.html#summary-of-contribution-for-adaptation-projects",
+    "href": "project.html#summary-of-contribution-for-adaptation-projects",
     "title": "DANL Project",
-    "section": "3.2 MPG and a Type of Cars",
-    "text": "3.2 MPG and a Type of Cars\nThe following boxplot shows how the distribution of highway MPG (hwy) varies by a type of cars (class) 🚙 🚚 🚐.\n\nggplot(data = mpg) +\n  geom_boxplot(aes(x = class, y = hwy, fill = class),\n               show.legend = F) +\n  labs(x = \"Class\", y = \"Highway\\nMPG\")"
+    "section": "3.2 Summary of Contribution for Adaptation Projects",
+    "text": "3.2 Summary of Contribution for Adaptation Projects\n8 countries have provided positive financial contributions to other countries / regions for their adaptation projects for every year between 2011 and 2018. 🚙 🚚 🚐.\n\nQ1a <- climate_finance %>% \n  filter(Status == \"provided\",                       \n         `Type of support` == \"adaptation\") %>%      \n  group_by(Party, Year) %>%                          \n  summarise(Contribution = sum(Contribution, na.rm = T)) %>%  \n  filter(Contribution > 0) %>%                       \n  group_by(Party) %>%                                \n  count() %>%                                        \n  filter(n == 2018 - 2011 + 1)  %>%                  \n  select(Party) %>% \n  distinct()"
+  },
+  {
+    "objectID": "project.html#yearly-contribution-varying-by-energy-and-status",
+    "href": "project.html#yearly-contribution-varying-by-energy-and-status",
+    "title": "DANL Project",
+    "section": "3.3 Yearly Contribution varying by Energy and Status",
+    "text": "3.3 Yearly Contribution varying by Energy and Status\nFor both sectors (energy and non-energy), the amount of the committed funding has been increasing yearly, while the amount of provided funding has stayed relatively constant. Energy related projects usually require a much greater upfront cost than non-energy related projects, hence why there is a gap for the provided amounts.\n\nggplot(data = mpg) +\n  geom_boxplot(aes(x = class, y = hwy, fill = class),\n               show.legend = F) +\n  labs(x = \"Class\", y = \"Highway\\nMPG\")"
+  },
+  {
+    "objectID": "project.html#distribution-of-ratio-between-adaptation-and-mitigation-contributions",
+    "href": "project.html#distribution-of-ratio-between-adaptation-and-mitigation-contributions",
+    "title": "DANL Project",
+    "section": "3.4 Distribution of ratio between adaptation and mitigation contributions",
+    "text": "3.4 Distribution of ratio between adaptation and mitigation contributions\n\nQ1c <- climate_finance %>% \n  group_by(Party, Year, Status, `Type of support`) %>% \n  summarise(Contribution = sum(Contribution, na.rm = T)) %>% \n  filter(Contribution != 0) %>% \n  group_by(Party, Year, Status) %>% \n  mutate(lag_Contribution = lag(Contribution), \n         am_ratio = lag_Contribution / Contribution ) %>% \n  filter(!is.na(am_ratio)) %>% \n  rename(mitigation = Contribution, \n         adaptation = lag_Contribution) %>% \n  select(-`Type of support`)  \n\nQ1c <- climate_finance %>% \n  group_by(Party, Year, Status) %>%  \n  summarise(adaptation = sum(Contribution[`Type of support` == 'adaptation'], na.rm = T), \n            mitigation = sum(Contribution[`Type of support` == 'mitigation'], na.rm = T)\n            ) %>% \n  filter(adaptation != 0, mitigation != 0) %>% \n  mutate(am_ratio = adaptation / mitigation ) \n\nggplot(Q1c, aes(x = log(am_ratio))) +\n  geom_histogram(bins = 75) +\n  geom_vline(xintercept = 0, color = 'red', lty = 2)"
+  },
+  {
+    "objectID": "project.html#contribution-varying-by-type-of-support-and-status",
+    "href": "project.html#contribution-varying-by-type-of-support-and-status",
+    "title": "DANL Project",
+    "section": "3.5 Contribution varying by Type of Support and Status",
+    "text": "3.5 Contribution varying by Type of Support and Status\nFor the amount of countries that have committed to support climate funding, meaning they have pledged to pay but have not actually provided any funding, the count is similar for adaptation versus mitigation projects. For countries that have actually provided contribution funds, the count is much higher for adaptation projects compared to mitigation projects.\n\nggplot(climate_finance,\n       aes(color = `Type of support`, x = log(Contribution))) +\n  geom_freqpoly() +\n  facet_wrap(.~ Status)"
   },
   {
     "objectID": "quarto-template (2).html",
