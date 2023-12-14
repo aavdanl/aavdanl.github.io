@@ -5,7 +5,7 @@ author:
   - name: Alex Ventresca
     affiliations:
       - name: SUNY Geneseo
-  - name: Name 2
+  - name: 
     affiliations:
       - name: SUNY Geneseo
   - <br>

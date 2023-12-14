@@ -1,0 +1,48 @@
+---
+title: "Question 2"
+author: "Alex Ventresca"
+date: "2023-10-30"
+categories: [NFL-IN-2022]
+image: "restaurant1.jpg"
+
+execute: 
+  warning: false
+  message: false
+  
+toc: true
+---
+```{r}
+#| include: false
+
+library(knitr)
+library(rmarkdown)
+library(tidyverse)
+library(skimr)
+library(ggthemes)
+library(hrbrthemes)
+
+theme_set(theme_ipsum()+
+          theme(strip.background =element_rect(fill="lightgray"),
+                axis.title.x  = element_text(angle = 0,
+                                            size = rel(1.5),
+                                            margin = margin(10,0,0,0)),
+                axis.title.y  = element_text(angle = 0,
+                                            size = rel(1.5),
+                                            margin = margin(0,10,0,0))
+                )
+          )
+```
+
+Data Frame
+
+```{r}
+NFL2022_stuffs <- read_csv('https://bcdanl.github.io/data/NFL2022_stuffs.csv')
+view(NFL2022_stuffs)
+```
+
+q2a. 
+  In data.frame, NFL2022_stuffs, remove observations for which values of posteam is missing.
+```{r}
+q2a <- is.na(NFL2022_stuffs)
+
+```

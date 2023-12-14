@@ -1,0 +1,2879 @@
+﻿function getSportShortname(global_sport_id) {
+    if (global_sport_id === 3 || global_sport_id === 4 || global_sport_id === 95 || global_sport_id === 96 || global_sport_id === 105 || global_sport_id === 110) {
+        return "basketball";
+    } else if (global_sport_id === 7 || global_sport_id === 8 || global_sport_id === 103 || global_sport_id === 104) {
+        return "soccer";
+    } else if (global_sport_id === 21 || global_sport_id === 22 || global_sport_id === 105 || global_sport_id === 111) {
+        return "volleyball";
+    } else if (global_sport_id === 13 || global_sport_id === 14 || global_sport_id === 78) {
+        return "hockey";
+    } else if (global_sport_id === 15 || global_sport_id === 16) {
+        return "lacrosse";
+    } else if (global_sport_id === 6 || global_sport_id === 114) {
+        return "fhockey";
+    } else if (global_sport_id === 1 || global_sport_id === 2 || global_sport_id === 101 || global_sport_id === 108 || global_sport_id === 102) {
+        return "baseball";
+    } else if (global_sport_id === 5) {
+        return "football";
+    } else {
+        return "";
+    }
+}
+
+function determineSum(element1, element2) {
+    // assumes element1 and element2 share the same format
+    element1 = String(element1);
+    element2 = String(element2);
+
+    if (element1.includes("-") && Math.sign(parseInt(element1)) !== -1) { 
+        // e.g. 0-1 + 1-2 = 1-3, doesn't include negative numbers
+        var numbers_element_1 = element1.split("-");
+        var numbers_element_2 = element2.split("-");
+
+        numbers_element_1.forEach((number, index) => {
+            numbers_element_1[index] = (Number(number) + Number(numbers_element_2[index])).toString();
+        });
+
+        return numbers_element_1.join("-");
+
+    } else if (element1.includes(":")) {
+        // e.g. 50:90 + 20:30 = 70:120
+        var numbers_element_1 = element1.split(":");
+        var numbers_element_2 = element2.split(":");
+
+        numbers_element_1.forEach((number, index) => {
+            numbers_element_1[index] = (Number(number) + Number(numbers_element_2[index])).toString();
+        });
+
+        // Convert seconds to minutes if greater than 60
+        if (numbers_element_1[1] >= 60) {
+            var minutes = Math.floor(Number(numbers_element_1[1]) / 60);
+            numbers_element_1[1] = Number(numbers_element_1[1]) - (minutes * 60);
+            numbers_element_1[0] = Number(numbers_element_1[0]) + minutes;
+        }
+
+        if (parseInt(numbers_element_1[1]) < 10) {
+            numbers_element_1[1] = "0" + numbers_element_1[1];
+        }
+
+        return numbers_element_1.join(":");
+    } else {
+        if (element1.includes(".")) {
+            var precision = element1.substring(element1.indexOf(".") + 1).length;
+
+            return (Number(element1) + Number(element2)).toFixed(precision);
+        }
+
+        return Number(element1) + Number(element2);
+    }
+}
+
+function to_minutes(time_string) {
+	var split_array = String(time_string).split(":");
+	if (split_array.length === 1) return split_array[0];
+
+	var minutes = parseInt(split_array[0]);
+	var seconds = parseInt(split_array[1]);
+
+	return minutes + parseFloat(seconds / 60);
+}
+
+function safe_divide(num1, num2) {
+	return num2 === 0 ? 0 : num1 / num2;
+}
+
+function create_tables(response, path, global_sport_id) {
+    var html = '';
+    var total = {};
+    var has_stats = false;
+
+    // ================= HOCKEY =================
+    if (path === "hockey") {
+        let show_goalie_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.goalie_stats && v.season_stats.goalie_stats.MIN !== "0:0") {
+                    has_stats = true;
+                    return true;
+                }
+            }
+        
+            return false;
+        };
+
+        if (show_goalie_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Goalkeeping Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Goalkeeping Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">MIN</th>
+                                    <th scope="col" class="text-center">GA</th>
+                                    <th scope="col" class="text-center">GA/AVG</th>
+                                    <th scope="col" class="text-center">SV</th>
+                                    <th scope="col" class="text-center">SV%</th>
+                                    <th scope="col" class="text-center">W</th>
+                                    <th scope="col" class="text-center">L</th>
+                                    <th scope="col" class="text-center">T</th>
+                                    <th scope="col" class="text-center">SHO</th>
+                                    <th scope="col" class="text-center">PPG</th>
+                                    <th scope="col" class="text-center">SHG</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+            let initial = true;
+            total = {};
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.goalie_stats || v.season_stats.goalie_stats.MIN === "0:0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.season_stats.goalie_stats.GP,
+                        "MIN": v.season_stats.goalie_stats.MIN,
+                        "GA": v.season_stats.goalie_stats.G,
+                        "GA/AVG": v.season_stats.goalie_stats.GAAVG,
+                        "SV": v.season_stats.goalie_stats.SAVES,
+                        "SV%": v.season_stats.goalie_stats.save_pct,
+                        "W": v.season_stats.goalie_stats.W,
+                        "L": v.season_stats.goalie_stats.L,
+                        "T": v.season_stats.goalie_stats.T,
+                        "SHO": v.season_stats.goalie_stats.SH,
+                        "PPG": v.season_stats.goalie_stats.PPG,
+                        "SHG": v.season_stats.goalie_stats.SHG
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.season_stats.goalie_stats.GP);
+                    total["MIN"] = determineSum(total["MIN"], v.season_stats.goalie_stats.MIN);
+                    total["GA"] = determineSum(total["GA"], v.season_stats.goalie_stats.G);
+                    total["GA/AVG"] = safe_divide(total["GA"] * 60, to_minutes(total["MIN"])).toFixed(2).replace(/^0+/, "");
+                    total["SV"] = determineSum(total["SV"], v.season_stats.goalie_stats.SAVES);
+                    total["SV%"] = safe_divide(total["SV"], Number(total["SV"]) + Number(total["GA"])).toFixed(3).replace(/^0+/, "");
+                    total["W"] = determineSum(total["W"], v.season_stats.goalie_stats.W);
+                    total["L"] = determineSum(total["L"], v.season_stats.goalie_stats.L);
+                    total["T"] = determineSum(total["T"], v.season_stats.goalie_stats.T);
+                    total["SHO"] = determineSum(total["SHO"], v.season_stats.goalie_stats.SH);
+                    total["PPG"] = determineSum(total["PPG"], v.season_stats.goalie_stats.PPG);
+                    total["SHG"] = determineSum(total["SHG"], v.season_stats.goalie_stats.SHG);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.season_stats.goalie_stats.GP}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.MIN}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.G}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.GAAVG}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.SAVES}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.save_pct}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.W}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.L}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.T}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.SH}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.PPG}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.SHG}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                     <tfoot>
+                         <tr>
+                             <th scope="row">Total</th>
+                             <td class="text-center">${total["GP"]}</td>
+                             <td class="text-center">${total["MIN"]}</td>
+                             <td class="text-center">${total["GA"]}</td>
+                             <td class="text-center">${total["GA/AVG"]}</td>
+                             <td class="text-center">${total["SV"]}</td>
+                             <td class="text-center">${total["SV%"]}</td>
+                             <td class="text-center">${total["W"]}</td>
+                             <td class="text-center">${total["L"]}</td>
+                             <td class="text-center">${total["T"]}</td>
+                             <td class="text-center">${total["SHO"]}</td>
+                             <td class="text-center">${total["PPG"]}</td>
+                             <td class="text-center">${total["SHG"]}</td>
+                         </tr>
+                     </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        initial = true;
+
+        let show_scoring_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.shot_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+    
+            return false;
+        };
+
+        if (show_scoring_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Scoring Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Scoring Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">G</th>
+                                    <th scope="col" class="text-center">A</th>
+                                    <th scope="col" class="text-center">PTS</th>
+                                    <th scope="col" class="text-center">Shots</th>
+                                    <th scope="col" class="text-center">Shot%</th>
+                                    <th scope="col" class="text-center">PEN</th>
+                                    <th scope="col" class="text-center">PIM</th>
+                                    <th scope="col" class="text-center">PPG</th>
+                                    <th scope="col" class="text-center">SHG</th>
+                                    <th scope="col" class="text-center">GWG</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.gp === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "G": v.season_stats.shot_stats.G,
+                        "A": v.season_stats.shot_stats.A,
+                        "PTS": v.season_stats.shot_stats.points,
+                        "Shots": v.season_stats.shot_stats.S,
+                        "Shot%": v.season_stats.shot_stats.shot_pct,
+                        "PEN": v.season_stats.penalty_stats.C,
+                        "PIM": v.season_stats.penalty_stats.MIN,
+                        "PPG": v.season_stats.goal_stats.PPG,
+                        "SHG": v.season_stats.goal_stats.SHG,
+                        "GWG": v.season_stats.goal_stats.GW
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["G"] = determineSum(total["G"], v.season_stats.shot_stats.G);
+                    total["A"] = determineSum(total["A"], v.season_stats.shot_stats.A);
+                    total["PTS"] = determineSum(total["PTS"], v.season_stats.shot_stats.points);
+                    total["Shots"] = determineSum(total["Shots"], v.season_stats.shot_stats.S);
+                    total["Shot%"] = safe_divide(total["G"], total["Shots"]).toFixed(3).replace(/^0+/, "");
+                    total["PEN"] = determineSum(total["PEN"], v.season_stats.penalty_stats.C);
+                    total["PIM"] = determineSum(parseInt(total["PIM"]), parseInt(v.season_stats.penalty_stats.MIN));
+                    total["PPG"] = determineSum(total["PPG"], v.season_stats.goal_stats.PPG);
+                    total["SHG"] = determineSum(total["SHG"], v.season_stats.goal_stats.SHG);
+                    total["GWG"] = determineSum(total["GWG"], v.season_stats.goal_stats.GW);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.G}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.A}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.points}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.S}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.shot_pct}</td>
+                                <td class="text-center">${v.season_stats.penalty_stats.C}</td>
+                                <td class="text-center">${v.season_stats.penalty_stats.MIN}</td>
+                                <td class="text-center">${v.season_stats.goal_stats.PPG}</td>
+                                <td class="text-center">${v.season_stats.goal_stats.SHG}</td>
+                                <td class="text-center">${v.season_stats.goal_stats.GW}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                     <tfoot>
+                         <tr>
+                             <th scope="row">Total</th>
+                             <td class="text-center">${total["GP"]}</td>
+                             <td class="text-center">${total["G"]}</td>
+                             <td class="text-center">${total["A"]}</td>
+                             <td class="text-center">${total["PTS"]}</td>
+                             <td class="text-center">${total["Shots"]}</td>
+                             <td class="text-center">${total["Shot%"]}</td>
+                             <td class="text-center">${total["PEN"]}</td>
+                             <td class="text-center">${total["PIM"]}</td>
+                             <td class="text-center">${total["PPG"]}</td>
+                             <td class="text-center">${total["SHG"]}</td>
+                             <td class="text-center">${total["GWG"]}</td>
+                         </tr>
+                     </tfoot>`;
+
+            html += `</table>
+                        </div>
+                    </section>`;
+        }
+
+        if (!has_stats) html = "There are no statistics available for this player.";
+    }
+
+    // ================= BASEBALL =================
+    if (path === "baseball") {
+        let show_pitching_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.pitching_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+        
+            return false;
+        };
+
+        if (show_pitching_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Pitching Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Pitching Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">ERA</th>
+                                    <th scope="col" class="text-center">W</th>
+                                    <th scope="col" class="text-center">L</th>
+                                    <th scope="col" class="text-center">APP</th>
+                                    <th scope="col" class="text-center">GS</th>
+                                    <th scope="col" class="text-center">CG</th>
+                                    <th scope="col" class="text-center">SHO</th>
+                                    <th scope="col" class="text-center">SV</th>
+                                    <th scope="col" class="text-center">IP</th>
+                                    <th scope="col" class="text-center">H</th>
+                                    <th scope="col" class="text-center">R</th>
+                                    <th scope="col" class="text-center">ER</th>
+                                    <th scope="col" class="text-center">BB</th>
+                                    <th scope="col" class="text-center">SO</th>
+                                    <th scope="col" class="text-center">2B</th>
+                                    <th scope="col" class="text-center">3B</th>
+                                    <th scope="col" class="text-center">HR</th>
+                                    <th scope="col" class="text-center">BF</th>
+                                    <th scope="col" class="text-center">BAVG</th>
+                                    <th scope="col" class="text-center">WP</th>
+                                    <th scope="col" class="text-center">HBP</th>
+                                    <th scope="col" class="text-center">BK</th>
+                                    <th scope="col" class="text-center">SFA</th>
+                                    <th scope="col" class="text-center">SHA</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+            let initial = true;
+            total = {};
+            var innings_pitched = 0;
+            var innings_fraction = 0;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.gp === "0" || v.season_stats.pitching_stats == null || v.season_stats.pitching_stats.appearances === "0") continue;
+
+                var ip = v.season_stats.pitching_stats.innings_pitched;
+                innings_pitched += Math.floor(ip);
+                innings_fraction += Math.round((ip - Math.floor(ip)) * 10) / 10; // Round to the nearest tenths
+
+                if (initial) {
+                    total = {
+                        "W": v.season_stats.pitching_stats.wins,
+                        "L": v.season_stats.pitching_stats.losses,
+                        "APP": v.season_stats.pitching_stats.appearances,
+                        "GS": v.season_stats.pitching_stats.games_started,
+                        "CG": v.season_stats.pitching_stats.games_completed,
+                        "SHO": v.season_stats.pitching_stats.shutouts,
+                        "SV": v.season_stats.pitching_stats.saves,
+                        "H": v.season_stats.pitching_stats.hits_allowed,
+                        "R": v.season_stats.pitching_stats.runs_allowed,
+                        "ER": v.season_stats.pitching_stats.earned_runs_allowed,
+                        "BB": v.season_stats.pitching_stats.walks_allowed,
+                        "SO": v.season_stats.pitching_stats.strikeouts,
+                        "2B": v.season_stats.pitching_stats.doubles_allowed,
+                        "3B": v.season_stats.pitching_stats.triples_allowed,
+                        "HR": v.season_stats.pitching_stats.homeruns_allowed,
+                        "BF": v.season_stats.pitching_stats.batters_faced,
+                        "BAVG": v.season_stats.pitching_stats.batting_average,
+                        "WP": v.season_stats.pitching_stats.wild_pitches,
+                        "HBP": v.season_stats.pitching_stats.hit_by_pitch,
+                        "BK": v.season_stats.pitching_stats.balks,
+                        "SFA": v.season_stats.pitching_stats.sacrifice_flies_allowed,
+                        "SHA": v.season_stats.pitching_stats.sacrifice_hits_allowed,
+                        "CATCHERS_INTERFERENCE": v.season_stats.pitching_stats.catchers_interference_allowed
+                    };
+                    initial = false;
+                } else {
+                    total["W"] = determineSum(total["W"], v.season_stats.pitching_stats.wins);
+                    total["L"] = determineSum(total["L"], v.season_stats.pitching_stats.losses);
+                    total["APP"] = determineSum(total["APP"], v.season_stats.pitching_stats.appearances);
+                    total["GS"] = determineSum(total["GS"], v.season_stats.pitching_stats.games_started);
+                    total["CG"] = determineSum(total["CG"], v.season_stats.pitching_stats.games_completed);
+                    total["SHO"] = determineSum(total["SHO"], v.season_stats.pitching_stats.shutouts);
+                    total["SV"] = determineSum(total["SV"], v.season_stats.pitching_stats.saves);
+                    total["H"] = determineSum(total["H"], v.season_stats.pitching_stats.hits_allowed);
+                    total["R"] = determineSum(total["R"], v.season_stats.pitching_stats.runs_allowed);
+                    total["ER"] = determineSum(total["ER"], v.season_stats.pitching_stats.earned_runs_allowed);
+                    total["BB"] = determineSum(total["BB"], v.season_stats.pitching_stats.walks_allowed);
+                    total["SO"] = determineSum(total["SO"], v.season_stats.pitching_stats.strikeouts);
+                    total["2B"] = determineSum(total["2B"], v.season_stats.pitching_stats.doubles_allowed);
+                    total["3B"] = determineSum(total["3B"], v.season_stats.pitching_stats.triples_allowed);
+                    total["HR"] = determineSum(total["HR"], v.season_stats.pitching_stats.homeruns_allowed);
+                    total["BF"] = determineSum(total["BF"], v.season_stats.pitching_stats.batters_faced);
+                    total["BAVG"] = determineSum(total["BF"], v.season_stats.pitching_stats.batting_average);
+                    total["WP"] = determineSum(total["WP"], v.season_stats.pitching_stats.wild_pitches);
+                    total["HBP"] = determineSum(total["HBP"], v.season_stats.pitching_stats.hit_by_pitch);
+                    total["BK"] = determineSum(total["BK"], v.season_stats.pitching_stats.balks);
+                    total["SFA"] = determineSum(total["SFA"], v.season_stats.pitching_stats.sacrifice_flies_allowed);
+                    total["SHA"] = determineSum(total["SHA"], v.season_stats.pitching_stats.sacrifice_hits_allowed);
+                    total["CATCHERS_INTERFERENCE"] = determineSum(total["CATCHERS_INTERFERENCE"], v.season_stats.pitching_stats.catchers_interference_allowed);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                            <td class="text-center">${v.season_stats.pitching_stats.earned_run_average}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.wins}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.losses}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.appearances}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.games_started}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.games_completed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.shutouts}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.saves}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.innings_pitched}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.hits_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.runs_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.earned_runs_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.walks_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.strikeouts}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.doubles_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.triples_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.homeruns_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.batters_faced}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.batting_average}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.wild_pitches}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.hit_by_pitch}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.balks}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.sacrifice_flies_allowed}</td>
+                            <td class="text-center">${v.season_stats.pitching_stats.sacrifice_hits_allowed}</td>
+                        </tr>`;
+            }
+
+            // Calculate innings pitched
+            var mod_remainder = Math.round((innings_fraction % 0.3) * 10) / 10;
+            if (mod_remainder > 0 || (mod_remainder === 0 && innings_fraction !== 0)) {
+                innings_pitched += Math.floor(innings_fraction / 0.3);
+                innings_fraction = mod_remainder;
+            }
+            innings_pitched = (Math.floor(innings_pitched) + innings_fraction).toFixed(1);
+
+            // Calculate total ERA
+            var innings_number = global_sport_id === 2 ? 7 : 9; // Baseball: 9, softball: 7
+            var innings_fractions = innings_pitched - Math.round(innings_pitched);
+            var actual_innings = parseInt(innings_pitched) + Math.round((innings_fractions * 3.3333) * 10000) / 10000;
+            var era = (parseInt(innings_pitched) + innings_fractions) === 0 
+                ? "0.00"
+                : ((innings_number * Number(total["ER"]) / actual_innings)).toFixed(2);
+            
+            var opponent_batting_avg = safe_divide(total["H"], total["BF"] - total["BB"] - total["HBP"] - total["SHA"] - total["SFA"] - total["CATCHERS_INTERFERENCE"]).toFixed(3);
+
+            html += `</tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="text-center">${era}</td>
+                                <td class="text-center">${total["W"]}</td>
+                                <td class="text-center">${total["L"]}</td>
+                                <td class="text-center">${total["APP"]}</td>
+                                <td class="text-center">${total["GS"]}</td>
+                                <td class="text-center">${total["CG"]}</td>
+                                <td class="text-center">${total["SHO"]}</td>
+                                <td class="text-center">${total["SV"]}</td>
+                                <td class="text-center">${innings_pitched}</td>
+                                <td class="text-center">${total["H"]}</td>
+                                <td class="text-center">${total["R"]}</td>
+                                <td class="text-center">${total["ER"]}</td>
+                                <td class="text-center">${total["BB"]}</td>
+                                <td class="text-center">${total["SO"]}</td>
+                                <td class="text-center">${total["2B"]}</td>
+                                <td class="text-center">${total["3B"]}</td>
+                                <td class="text-center">${total["HR"]}</td>
+                                <td class="text-center">${total["BF"]}</td>
+                                <td class="text-center">${opponent_batting_avg < 1 ? opponent_batting_avg.substring(1) : opponent_batting_avg}</td>
+                                <td class="text-center">${total["WP"]}</td>
+                                <td class="text-center">${total["HBP"]}</td>
+                                <td class="text-center">${total["BK"]}</td>
+                                <td class="text-center">${total["SFA"]}</td>
+                                <td class="text-center">${total["SHA"]}</td>
+                            </tr>
+                        </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        initial = true;
+
+        let show_hitting_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.hitting_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_hitting_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Hitting Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Hitting Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">AVG</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">GS</th>
+                                    <th scope="col" class="text-center">AB</th>
+                                    <th scope="col" class="text-center">R</th>
+                                    <th scope="col" class="text-center">H</th>
+                                    <th scope="col" class="text-center">2B</th>
+                                    <th scope="col" class="text-center">3B</th>
+                                    <th scope="col" class="text-center">HR</th>
+                                    <th scope="col" class="text-center">RBI</th>
+                                    <th scope="col" class="text-center">SLG%</th>
+                                    <th scope="col" class="text-center">BB</th>
+                                    <th scope="col" class="text-center">HBP</th>
+                                    <th scope="col" class="text-center">SO</th>
+                                    <th scope="col" class="text-center">GDP</th>
+                                    <th scope="col" class="text-center">OB%</th>
+                                    <th scope="col" class="text-center">SF</th>
+                                    <th scope="col" class="text-center">SH</th>
+                                    <th scope="col" class="text-center">SB</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.gp === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "GS": v.gs,
+                        "AB": v.season_stats.hitting_stats.at_bats,
+                        "R": v.season_stats.hitting_stats.runs,
+                        "H": v.season_stats.hitting_stats.hits,
+                        "2B": v.season_stats.hitting_stats.doubles,
+                        "3B": v.season_stats.hitting_stats.triples,
+                        "HR": v.season_stats.hitting_stats.home_runs,
+                        "RBI": v.season_stats.hitting_stats.runs_batted_in,
+                        "BB": v.season_stats.hitting_stats.walks,
+                        "HBP": v.season_stats.hitting_stats.hit_by_pitch,
+                        "SO": v.season_stats.hitting_stats.strikeouts,
+                        "GDP": v.season_stats.hitting_stats.grounded_into_double_play,
+                        "SF": v.season_stats.hitting_stats.sacrifice_flies,
+                        "SH": v.season_stats.hitting_stats.sacrifice_hits,
+                        "SB": v.season_stats.hitting_stats.stolen_bases,
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["GS"] = determineSum(total["GS"], v.gs);
+                    total["AB"] = determineSum(total["AB"], v.season_stats.hitting_stats.at_bats);
+                    total["R"] = determineSum(total["R"], v.season_stats.hitting_stats.runs);
+                    total["H"] = determineSum(total["H"], v.season_stats.hitting_stats.hits);
+                    total["2B"] = determineSum(total["2B"], v.season_stats.hitting_stats.doubles);
+                    total["3B"] = determineSum(total["3B"], v.season_stats.hitting_stats.triples);
+                    total["HR"] = determineSum(total["HR"], v.season_stats.hitting_stats.home_runs);
+                    total["RBI"] = determineSum(total["RBI"], v.season_stats.hitting_stats.runs_batted_in);
+                    total["BB"] = determineSum(total["BB"], v.season_stats.hitting_stats.walks);
+                    total["HBP"] = determineSum(total["HBP"], v.season_stats.hitting_stats.hit_by_pitch);
+                    total["SO"] = determineSum(total["SO"], v.season_stats.hitting_stats.strikeouts);
+                    total["GDP"] = determineSum(total["GDP"], v.season_stats.hitting_stats.grounded_into_double_play);
+                    total["SF"] = determineSum(total["SF"], v.season_stats.hitting_stats.sacrifice_flies);
+                    total["SH"] = determineSum(total["SH"], v.season_stats.hitting_stats.sacrifice_hits);
+                    total["SB"] = determineSum(total["SB"], v.season_stats.hitting_stats.stolen_bases);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                            <td class="text-center">${v.season_stats.hitting_stats.avg}</td>
+                            <td class="text-center">${v.gp}</td>
+                            <td class="text-center">${v.gs}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.at_bats}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.runs}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.hits}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.doubles}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.triples}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.home_runs}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.runs_batted_in}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.slugging_percentage}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.walks}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.hit_by_pitch}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.strikeouts}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.grounded_into_double_play}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.onbase_percentage}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.sacrifice_flies}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.sacrifice_hits}</td>
+                            <td class="text-center">${v.season_stats.hitting_stats.stolen_bases}</td>
+                        </tr>`;
+            }
+
+            var batting_avg = safe_divide(total["H"], total["AB"]).toFixed(3);
+
+            // Calculate slugging percentage
+            var slugging_pct = ".000";
+            var h = Number(total["H"]) + Number(total["2B"]) + (Number(total["3B"]) * 2) + (Number(total["HR"]) * 3);
+            var ab = total["AB"];
+            if (h !== 0 && ab !== 0) {
+                slugging_pct = safe_divide(h, Number(ab)).toFixed(3);
+            }
+
+            var on_base_pct = safe_divide((Number(total["H"]) + Number(total["BB"]) + Number(total["HBP"])), (Number(total["AB"]) + Number(total["BB"]) + Number(total["HBP"]) + Number(total["SF"]))).toFixed(3);
+
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${batting_avg < 1 ? batting_avg.substring(1) : batting_avg}</td>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["GS"]}</td>
+                                    <td class="text-center">${total["AB"]}</td>
+                                    <td class="text-center">${total["R"]}</td>
+                                    <td class="text-center">${total["H"]}</td>
+                                    <td class="text-center">${total["2B"]}</td>
+                                    <td class="text-center">${total["3B"]}</td>
+                                    <td class="text-center">${total["HR"]}</td>
+                                    <td class="text-center">${total["RBI"]}</td>
+                                    <td class="text-center">${slugging_pct < 1 ? slugging_pct.substring(1) : slugging_pct}</td>
+                                    <td class="text-center">${total["BB"]}</td>
+                                    <td class="text-center">${total["HBP"]}</td>
+                                    <td class="text-center">${total["SO"]}</td>
+                                    <td class="text-center">${total["GDP"]}</td>
+                                    <td class="text-center">${on_base_pct < 1 ? on_base_pct.substring(1) : on_base_pct}</td>
+                                    <td class="text-center">${total["SF"]}</td>
+                                    <td class="text-center">${total["SH"]}</td>
+                                    <td class="text-center">${total["SB"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        initial = true;
+
+        let show_fielding_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.fielding_stats) {
+                    return true;
+                }
+            }
+    
+            return false;
+        };
+
+        if (show_fielding_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Fielding Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Fielding Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">PO</th>
+                                    <th scope="col" class="text-center">A</th>
+                                    <th scope="col" class="text-center">E</th>
+                                    <th scope="col" class="text-center">FLD%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.gp === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "PO": v.season_stats.fielding_stats.putouts,
+                        "A": v.season_stats.fielding_stats.assists,
+                        "E": v.season_stats.fielding_stats.errors
+                    };
+                    initial = false;
+                } else {
+                    total["PO"] = determineSum(total["PO"], v.season_stats.fielding_stats.putouts);
+                    total["A"] = determineSum(total["A"], v.season_stats.fielding_stats.assists);
+                    total["E"] = determineSum(total["E"], v.season_stats.fielding_stats.errors);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.season_stats.fielding_stats.putouts}</td>
+                                <td class="text-center">${v.season_stats.fielding_stats.assists}</td>
+                                <td class="text-center">${v.season_stats.fielding_stats.errors}</td>
+                                <td class="text-center">${v.season_stats.fielding_stats.fld_pct}</td>
+                        	</th>
+                        </tr>`;
+            }
+
+            var field_pct = safe_divide((Number(total["PO"]) + Number(total["A"])), (Number(total["PO"]) + Number(total["A"]) + Number(total["E"]))).toFixed(3);
+
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["PO"]}</td>
+                                    <td class="text-center">${total["A"]}</td>
+                                    <td class="text-center">${total["E"]}</td>
+                                    <td class="text-center">${field_pct < 1 ? field_pct.substring(1) : field_pct}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        if (!has_stats) html = "There are no statistics available for this player.";
+    }
+
+    // ================= BASKETBALL =================
+    if (path === "basketball") {
+        html += `<section class="sidearm-section-label-fixed">`;
+        html += `<div class="sidearm-table-overflow-on-medium">
+                    <table class="sidearm-table">
+                        <caption class="hide">Career Statistics</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" rowspan="2" class="text-hide">Season</th>
+                                <th scope="col" rowspan="2">GP</th>
+                                <th scope="col" rowspan="2">GS</th>
+                                <th scope="colgroup" colspan="2">Minutes</th>
+                                <th scope="colgroup" colspan="3">Totals</th>
+                                <th scope="colgroup" colspan="3">3-Point</th>
+                                <th scope="colgroup" colspan="3">Free-Throws</th>
+                                <th scope="colgroup" colspan="4">Rebounds</th>
+                                <th scope="col" rowspan="2">PF</th>
+                                <th scope="col" rowspan="2">FO</th>
+                                <th scope="col" rowspan="2">AST</th>
+                                <th scope="col" rowspan="2">AST/G</th>
+                                <th scope="col" rowspan="2">T/O</th>
+                                <th scope="col" rowspan="2">BLK</th>
+                                <th scope="col" rowspan="2">STL</th>
+                                <th scope="col" rowspan="2">PTS</th>
+                                <th scope="col" rowspan="2">AVG</th>
+                            </tr>
+                            <tr>
+                                <th scope="col">MIN</th>
+                                <th scope="col">AVG</th>
+                                <th scope="col">FG</th>
+                                <th scope="col">FGA</th>
+                                <th scope="col">PCT</th>
+                                <th scope="col">FG</th>
+                                <th scope="col">FGA</th>
+                                <th scope="col">PCT</th>
+                                <th scope="col">FT</th>
+                                <th scope="col">FTA</th>
+                                <th scope="col">PCT</th>
+                                <th scope="col">OFF</th>
+                                <th scope="col">DEF</th>
+                                <th scope="col">TOT</th>
+                                <th scope="col">AVG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+        let initial = true;
+        total = {};
+        for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+            if (v.season_stats.stats.gp === "0") continue;
+
+            if (initial) {
+                total = {
+                    "GP": v.season_stats.stats.gp,
+                    "GS": v.season_stats.stats.gs,
+                    "MIN": v.season_stats.stats.min,
+                    "MIN_AVG": v.season_stats.stats.minutes_played_avg,
+                    "TOTAL_FG": v.season_stats.stats.fgm,
+                    "TOTAL_FGA": v.season_stats.stats.fga,
+                    "TOTAL_FGA_PCT": v.season_stats.stats.fgm_pct,
+                    "3POINT_FG": v.season_stats.stats.fgm3,
+                    "3POINT_FGA": v.season_stats.stats.fga3,
+                    "3POINT_FGA_PCT": v.season_stats.stats.three_point_pct,
+                    "FREETHROW_FT": v.season_stats.stats.ftm,
+                    "FREETHROW_FTA": v.season_stats.stats.fta,
+                    "FREETHROW_FTA_PCT": v.season_stats.stats.free_throw_pct,
+                    "REBOUND_OFF": v.season_stats.stats.off_rebounds,
+                    "REBOUND_DEF": v.season_stats.stats.def_rebounds,
+                    "REBOUND_TOT": v.season_stats.stats.rebounds,
+                    "REBOUND_AVG": v.season_stats.stats.rebound_avg,
+                    "PF": v.season_stats.stats.pf,
+                    "FO": v.season_stats.stats.disq,
+                    "AST": v.season_stats.stats.assists,
+                    "AST/G": v.season_stats.stats.assist_avg,
+                    "T/O": v.season_stats.stats.turnovers,
+                    "BLK": v.season_stats.stats.blk_recvd,
+                    "STL": v.season_stats.stats.steals,
+                    "PTS": v.season_stats.stats.points,
+                    "AVG": v.season_stats.stats.points_avg
+                };
+                initial = false;
+            } else {
+                total["GP"] = determineSum(total["GP"], v.season_stats.stats.gp);
+                total["GS"] = determineSum(total["GS"], v.season_stats.stats.gs);
+                total["MIN"] = determineSum(total["MIN"], v.season_stats.stats.min);
+                total["MIN_AVG"] = safe_divide(total["MIN"], total["GP"]).toFixed(1).replace(/^0+/, "");
+                total["TOTAL_FG"] = determineSum(total["TOTAL_FG"], v.season_stats.stats.fgm);
+                total["TOTAL_FGA"] = determineSum(total["TOTAL_FGA"], v.season_stats.stats.fga);
+                total["TOTAL_FGA_PCT"] = safe_divide(total["TOTAL_FG"], total["TOTAL_FGA"]).toFixed(3).replace(/^0+/, "");
+                total["3POINT_FG"] = determineSum(total["3POINT_FG"], v.season_stats.stats.fgm3);
+                total["3POINT_FGA"] = determineSum(total["3POINT_FGA"], v.season_stats.stats.fga3);
+                total["3POINT_FGA_PCT"] = safe_divide(total["3POINT_FG"], total["3POINT_FGA"]).toFixed(3).replace(/^0+/, "");
+                total["FREETHROW_FT"] = determineSum(total["FREETHROW_FT"], v.season_stats.stats.ftm);
+                total["FREETHROW_FTA"] = determineSum(total["FREETHROW_FTA"], v.season_stats.stats.fta);
+                total["FREETHROW_FTA_PCT"] = safe_divide(total["FREETHROW_FT"], total["FREETHROW_FTA"]).toFixed(3).replace(/^0+/, "");
+                total["REBOUND_OFF"] = determineSum(total["REBOUND_OFF"], v.season_stats.stats.off_rebounds);
+                total["REBOUND_DEF"] = determineSum(total["REBOUND_DEF"], v.season_stats.stats.def_rebounds);
+                total["REBOUND_TOT"] = determineSum(total["REBOUND_TOT"], v.season_stats.stats.rebounds);
+                total["REBOUND_AVG"] = safe_divide(total["REBOUND_TOT"], total["GP"]).toFixed(1).replace(/^0+/, "");
+                total["PF"] = determineSum(total["PF"], v.season_stats.stats.pf);
+                total["FO"] = determineSum(total["FO"], v.season_stats.stats.disq);
+                total["AST"] = determineSum(total["AST"], v.season_stats.stats.assists);
+                total["AST/G"] = safe_divide(total["AST"], total["GP"]).toFixed(1);
+                total["T/O"] = determineSum(total["T/O"], v.season_stats.stats.turnovers);
+                total["BLK"] = determineSum(total["BLK"], v.season_stats.stats.blk_recvd);
+                total["STL"] = determineSum(total["STL"], v.season_stats.stats.steals);
+                total["PTS"] = determineSum(total["PTS"], v.season_stats.stats.points);
+                total["AVG"] = safe_divide(total["PTS"], total["GP"]).toFixed(1).replace(/^0+/, "");
+            }
+            html += `<tr>
+                        <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                            <td class="text-center">${v.season_stats.stats.gp}</td>
+                            <td class="text-center">${v.season_stats.stats.gs}</td>
+                            <td class="text-center">${v.season_stats.stats.min}</td>
+                            <td class="text-center">${v.season_stats.stats.minutes_played_avg}</td>
+                            <td class="text-center">${v.season_stats.stats.fgm}</td>
+                            <td class="text-center">${v.season_stats.stats.fga}</td>
+                            <td class="text-center">${v.season_stats.stats.fgm_pct}</td>
+                            <td class="text-center">${v.season_stats.stats.fgm3}</td>
+                            <td class="text-center">${v.season_stats.stats.fga3}</td>
+                            <td class="text-center">${v.season_stats.stats.three_point_pct}</td>
+                            <td class="text-center">${v.season_stats.stats.ftm}</td>
+                            <td class="text-center">${v.season_stats.stats.fta}</td>
+                            <td class="text-center">${v.season_stats.stats.free_throw_pct}</td>
+                            <td class="text-center">${v.season_stats.stats.off_rebounds}</td>
+                            <td class="text-center">${v.season_stats.stats.def_rebounds}</td>
+                            <td class="text-center">${v.season_stats.stats.rebounds}</td>
+                            <td class="text-center">${v.season_stats.stats.rebound_avg}</td>
+                            <td class="text-center">${v.season_stats.stats.pf}</td>
+                            <td class="text-center">${v.season_stats.stats.disq}</td>
+                            <td class="text-center">${v.season_stats.stats.assists}</td>
+                            <td class="text-center">${v.season_stats.stats.assist_avg}</td>
+                            <td class="text-center">${v.season_stats.stats.turnovers}</td>
+                            <td class="text-center">${v.season_stats.stats.blk_recvd}</td>
+                            <td class="text-center">${v.season_stats.stats.steals}</td>
+                            <td class="text-center">${v.season_stats.stats.points}</td>
+                            <td class="text-center">${v.season_stats.stats.points_avg}</td>
+                        </th>
+                	</tr>`;
+        }
+        html += `</tbody>
+                    <tfoot>
+                        <tr>
+                            <th scope="row">Total</th>
+                            <td class="text-center">${total["GP"]}</td>
+                            <td class="text-center">${total["GS"]}</td>
+                            <td class="text-center">${total["MIN"]}</td>
+                            <td class="text-center">${total["MIN_AVG"]}</td>
+                            <td class="text-center">${total["TOTAL_FG"]}</td>
+                            <td class="text-center">${total["TOTAL_FGA"]}</td>
+                            <td class="text-center">${total["TOTAL_FGA_PCT"]}</td>
+                            <td class="text-center">${total["3POINT_FG"]}</td>
+                            <td class="text-center">${total["3POINT_FGA"]}</td>
+                            <td class="text-center">${total["3POINT_FGA_PCT"]}</td>
+                            <td class="text-center">${total["FREETHROW_FT"]}</td>
+                            <td class="text-center">${total["FREETHROW_FTA"]}</td>
+                            <td class="text-center">${total["FREETHROW_FTA_PCT"]}</td>
+                            <td class="text-center">${total["REBOUND_OFF"]}</td>
+                            <td class="text-center">${total["REBOUND_DEF"]}</td>
+                            <td class="text-center">${total["REBOUND_TOT"]}</td>
+                            <td class="text-center">${total["REBOUND_AVG"]}</td>
+                            <td class="text-center">${total["PF"]}</td>
+                            <td class="text-center">${total["FO"]}</td>
+                            <td class="text-center">${total["AST"]}</td>
+                            <td class="text-center">${total["AST/G"]}</td>
+                            <td class="text-center">${total["T/O"]}</td>
+                            <td class="text-center">${total["BLK"]}</td>
+                            <td class="text-center">${total["STL"]}</td>
+                            <td class="text-center">${total["PTS"]}</td>
+                            <td class="text-center">${total["AVG"]}</td>
+                        </tr>
+                    </tfoot>`;
+        html += `</table>
+                    </div>
+                </section>`;
+    }
+
+    // ================= SOCCER =================
+    if (path === "soccer") {
+        let show_goalie_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.goalie_stats && v.season_stats.goalie_stats.gp !== "0") {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_goalie_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Goalkeeping Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Goalkeeping Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">MIN</th>
+                                    <th scope="col" class="text-center">GA</th>
+                                    <th scope="col" class="text-center">GA/AVG</th>
+                                    <th scope="col" class="text-center">SV</th>
+                                    <th scope="col" class="text-center">SV%</th>
+                                    <th scope="col" class="text-center">W</th>
+                                    <th scope="col" class="text-center">L</th>
+                                    <th scope="col" class="text-center">T</th>
+                                    <th scope="col" class="text-center">SHO</th>
+                                    <th scope="col" class="text-center">SF</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+            let initial = true;
+            total = {};
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.season_stats.goalie_stats.games_played === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.season_stats.goalie_stats.games_played,
+                        "MIN": v.season_stats.goalie_stats.min,
+                        "GA": v.season_stats.goalie_stats.ga,
+                        "GA/AVG": v.season_stats.goalie_stats.gaavg,
+                        "SV": v.season_stats.goalie_stats.saves,
+                        "W": v.season_stats.goalie_stats.w,
+                        "L": v.season_stats.goalie_stats.l,
+                        "T": v.season_stats.goalie_stats.t,
+                        "SHO": v.season_stats.goalie_stats.sho,
+                        "SF": v.season_stats.goalie_stats.sf
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.season_stats.goalie_stats.games_played);
+                    total["MIN"] = determineSum(total["MIN"], v.season_stats.goalie_stats.min);
+                    total["GA"] = determineSum(total["GA"], v.season_stats.goalie_stats.ga);
+                    total["SV"] = determineSum(total["SV"], v.season_stats.goalie_stats.saves);
+                    total["W"] = determineSum(total["W"], v.season_stats.goalie_stats.w);
+                    total["L"] = determineSum(total["L"], v.season_stats.goalie_stats.l);
+                    total["T"] = determineSum(total["T"], v.season_stats.goalie_stats.t);
+                    total["SHO"] = determineSum(total["SHO"], v.season_stats.goalie_stats.sho);
+                    total["SF"] = determineSum(total["SF"], v.season_stats.goalie_stats.sf);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.season_stats.goalie_stats.games_played}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.min}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.ga}</td>
+                                <td class="text-center">${Number(v.season_stats.goalie_stats.gaavg).toFixed(2)}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.saves}</td>
+                                <td class="text-center">${Number(v.season_stats.goalie_stats.svpct).toFixed(3)}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.w}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.l}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.t}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.sho}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.sf}</td>
+                        	</th>
+                        </tr>`;
+            }
+
+            // Round to the nearest minutes
+            let minutes_array = total["MIN"].split(":");
+            let min = parseInt(minutes_array[0]);
+            let sec = parseInt(minutes_array[1]);
+            if (sec > 30) {
+                min += 1;
+            }
+
+            var gaavg = (safe_divide(total["GA"], min) * 90).toFixed(2);
+            var save_pct = safe_divide(total["SV"], Number(total["GA"]) + Number(total["SV"])).toFixed(3);
+
+            html += `</tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="text-center">${total["GP"]}</td>
+                                <td class="text-center">${total["MIN"]}</td>
+                                <td class="text-center">${total["GA"]}</td>
+                                <td class="text-center">${gaavg}</td>
+                                <td class="text-center">${total["SV"]}</td>
+                                <td class="text-center">${save_pct}</td>
+                                <td class="text-center">${total["W"]}</td>
+                                <td class="text-center">${total["L"]}</td>
+                                <td class="text-center">${total["T"]}</td>
+                                <td class="text-center">${total["SHO"]}</td>
+                                <td class="text-center">${total["SF"]}</td>
+                            </tr>
+                        </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        initial = true;
+
+        let show_scoring_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.shot_stats && v.games_played !== "0") {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_scoring_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Scoring Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Scoring Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">GS</th>
+                                    <th scope="col" class="text-center">G</th>
+                                    <th scope="col" class="text-center">A</th>
+                                    <th scope="col" class="text-center">PTS</th>
+                                    <th scope="col" class="text-center">SH</th>
+                                    <th scope="col" class="text-center">SH%</th>
+                                    <th scope="col" class="text-center">SOG</th>
+                                    <th scope="col" class="text-center">SOG%</th>
+                                    <th scope="col" class="text-center">GW</th>
+                                    <th scope="col" class="text-center">PK-ATT</th>
+                                    <th scope="col" class="text-center">MIN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.games_played === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.games_played,
+                        "GS": v.games_started,
+                        "G": v.season_stats.shot_stats.g,
+                        "A": v.season_stats.shot_stats.a,
+                        "PTS": v.season_stats.shot_stats.pts,
+                        "SH": v.season_stats.shot_stats.shots,
+                        "SH%": v.season_stats.shot_stats.shots_pct,
+                        "SOG": v.season_stats.shot_stats.sog,
+                        "SOG%": v.season_stats.shot_stats.sog_pct,
+                        "GW": v.season_stats.goal_stats.gw,
+                        "PK-ATT": v.season_stats.shot_stats.pk + "-" + v.season_stats.shot_stats.pkatt,
+                        "MIN": v.min
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.games_played);
+                    total["GS"] = determineSum(total["GS"], v.games_started);
+                    total["G"] = determineSum(total["G"], v.season_stats.shot_stats.g);
+                    total["A"] = determineSum(total["A"], v.season_stats.shot_stats.a);
+                    total["PTS"] = determineSum(total["PTS"], v.season_stats.shot_stats.pts);
+                    total["SH"] = determineSum(total["SH"], v.season_stats.shot_stats.shots);
+                    total["SH%"] = safe_divide(total["G"], total["SH"]).toFixed(3);
+                    total["SOG"] = determineSum(total["SOG"], v.season_stats.shot_stats.sog);
+                    total["SOG%"] = safe_divide(total["SOG"], total["SH"]).toFixed(3);
+                    total["GW"] = determineSum(total["GW"], v.season_stats.goal_stats.gw);
+                    total["PK-ATT"] = determineSum(total["PK-ATT"], v.season_stats.shot_stats.pk + "-" + v.season_stats.shot_stats.pkatt);
+                    total["MIN"] = determineSum(total["MIN"], v.min);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.games_played}</td>
+                                <td class="text-center">${v.games_started}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.g}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.a}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.pts}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.shots}</td>
+                                <td class="text-center">${Number(v.season_stats.shot_stats.sho_pct).toFixed(3)}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.sog}</td>
+                                <td class="text-center">${Number(v.season_stats.shot_stats.sog_pct).toFixed(3)}</td>
+                                <td class="text-center">${v.season_stats.goal_stats.gw}</td>
+                                <td class="text-center">${v.season_stats.shot_stats.pk + "-" + v.season_stats.shot_stats.pkatt}</td>
+                                <td class="text-center">${v.min}</td>
+                        	</th>
+                        </tr>`;
+            }
+
+            var shot_pct = safe_divide(Number(total["G"]), Number(total["SH"])).toFixed(3);
+
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["GS"]}</td>
+                                    <td class="text-center">${total["G"]}</td>
+                                    <td class="text-center">${total["A"]}</td>
+                                    <td class="text-center">${total["PTS"]}</td>
+                                    <td class="text-center">${total["SH"]}</td>
+                                    <td class="text-center">${shot_pct === "0" ? "0.000" : shot_pct}</td>
+                                    <td class="text-center">${total["SOG"]}</td>
+                                    <td class="text-center">${total["SOG%"] === "0" ? "0.000" : total["SOG%"]}</td>
+                                    <td class="text-center">${total["GW"]}</td>
+                                    <td class="text-center">${total["PK-ATT"]}</td>
+                                    <td class="text-center">${total["MIN"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        if (!has_stats) html = "There are no statistics available for this player.";
+    }
+
+    // ================= FOOTBALL =================
+    if (path === "football") {
+       // Rushing
+       let show_rushing_table = () => {
+           for (const [k, v] of Object.entries(response)) {
+               if (v.season_stats.rush_stats) {
+                    has_stats = true;
+                    return true;
+               }
+           }
+    
+           return false;
+       };
+
+        if (show_rushing_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Rushing Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Rushing Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">ATT</th>
+                                    <th scope="col" class="text-center">YDS</th>
+                                    <th scope="col" class="text-center">TD</th>
+                                    <th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">AVG/A</th>
+                                    <th scope="col" class="text-center">AVG/G</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+            let initial = true;
+            total = {};
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.rush_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "ATT": v.season_stats.rush_stats.attempts,
+                        "YDS": v.season_stats.rush_stats.yards,
+                        "TD": v.season_stats.rush_stats.touchdowns,
+                        "Long": v.season_stats.rush_stats.longest,
+                        "AVG/A": v.season_stats.rush_stats.rush_attempt_yards_pct,
+                        "AVG/G": v.season_stats.rush_stats.yards_per_game_avg
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["ATT"] = determineSum(total["ATT"], v.season_stats.rush_stats.attempts);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.rush_stats.yards);
+                    total["TD"] = determineSum(total["TD"], v.season_stats.rush_stats.touchdowns);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.rush_stats.longest);
+                    total["AVG/A"] = safe_divide(total["YDS"], total["ATT"]).toFixed(1);
+                    total["AVG/G"] = safe_divide(total["YDS"], total["GP"]).toFixed(1);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.rush_stats.attempts}</td>
+                                <td class="text-center">${v.season_stats.rush_stats.yards}</td>
+                                <td class="text-center">${v.season_stats.rush_stats.touchdowns}</td>
+                                <td class="text-center">${v.season_stats.rush_stats.longest}</td>
+                                <td class="text-center">${v.season_stats.rush_stats.rush_attempt_yards_pct}</td>
+                                <td class="text-center">${v.season_stats.rush_stats.yards_per_game_avg}</td>
+                        	</tr>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["ATT"]}</td>
+                                    <td class="text-center">${total["YDS"]}</td>
+                                    <td class="text-center">${total["TD"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["AVG/A"]}</td>
+                                    <td class="text-center">${total["AVG/G"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        // Passing
+        let show_passing_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.pass_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+    
+            return false;
+        };
+
+        if (show_passing_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Passing Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Passing  Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">CMP</th>
+                                    <th scope="col" class="text-center">ATT</th>
+                                    <th scope="col" class="text-center">INT</th>
+                                    <th scope="col" class="text-center">YDS</th>
+                                    <th scope="col" class="text-center">TD</th>
+                                    <th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">%</th>
+                                    <th scope="col" class="text-center">AVG/P</th>
+                                    <th scope="col" class="text-center">AVG/G</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.pass_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "CMP": v.season_stats.pass_stats.completions,
+                        "ATT": v.season_stats.pass_stats.pass_attempts,
+                        "INT": v.season_stats.pass_stats.interceptions,
+                        "YDS": v.season_stats.pass_stats.pass_yards,
+                        "TD": v.season_stats.pass_stats.pass_td,
+                        "Long": v.season_stats.pass_stats.long_comp,
+                        "%": v.season_stats.pass_stats.pass_pct,
+                        "AVG/P": v.season_stats.pass_stats.pass_yrd_avg,
+                        "AVG/G": v.season_stats.pass_stats.average_yards_game
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["CMP"] = determineSum(total["CMP"], v.season_stats.pass_stats.completions);
+                    total["ATT"] = determineSum(total["ATT"], v.season_stats.pass_stats.pass_attempts);
+                    total["INT"] = determineSum(total["INT"], v.season_stats.pass_stats.interceptions);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.pass_stats.pass_yards);
+                    total["TD"] = determineSum(total["TD"], v.season_stats.pass_stats.pass_td);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.pass_stats.long_comp);
+                    total["%"] = safe_divide(total["CMP"], total["ATT"]).toFixed(2);
+                    total["AVG/P"] = safe_divide(total["YDS"], total["ATT"]).toFixed(1);
+                    total["AVG/G"] = safe_divide(total["YDS"], total["GP"]).toFixed(1);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.completions}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.pass_attempts}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.interceptions}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.pass_yards}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.pass_td}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.long_comp}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.pass_pct}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.pass_yrd_avg}</td>
+                                <td class="text-center">${v.season_stats.pass_stats.average_yards_game}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["CMP"]}</td>
+                                    <td class="text-center">${total["ATT"]}</td>
+                                    <td class="text-center">${total["INT"]}</td>
+                                    <td class="text-center">${total["YDS"]}</td>
+                                    <td class="text-center">${total["TD"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["%"]}</td>
+                                    <td class="text-center">${total["AVG/P"]}</td>
+                                    <td class="text-center">${total["AVG/G"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        // Receiving
+        let show_receiving_table = () => {
+           for (const [k, v] of Object.entries(response)) {
+               if (v.season_stats.receiving_stats) {
+                   has_stats = true;
+                   return true;
+               }
+           }
+    
+           return false;
+        };
+
+        if (show_receiving_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Receiving Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Receiving Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">REC</th>
+                                	<th scope="col" class="text-center">YDS</th>
+                                	<th scope="col" class="text-center">TD</th>
+                                	<th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">REC/G</th>
+                                    <th scope="col" class="text-center">AVG/C</th>
+                                    <th scope="col" class="text-center">AVG/G</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.receiving_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "REC": v.season_stats.receiving_stats.recep,
+                        "YDS": v.season_stats.receiving_stats.yards,
+                        "TD": v.season_stats.receiving_stats.touchdowns,
+                        "Long": v.season_stats.receiving_stats.longest,
+                        "REC/G": v.season_stats.receiving_stats.per_game,
+                        "AVG/C": v.season_stats.receiving_stats.yards_comp_pct,
+                        "AVG/G": v.season_stats.receiving_stats.yards_game_pct
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["REC"] = determineSum(total["REC"], v.season_stats.receiving_stats.recep);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.receiving_stats.yards);
+                    total["TD"] = determineSum(total["TD"], v.season_stats.receiving_stats.touchdowns);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.receiving_stats.longest);
+                    total["REC/G"] = safe_divide(total["REC"], total["GP"]).toFixed(1);
+                    total["AVG/C"] = safe_divide(total["YDS"], total["REC"]).toFixed(1);
+                    total["AVG/G"] = safe_divide(total["YDS"], total["GP"]).toFixed(1);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.receiving_stats.recep}</td>
+                                <td class="text-center">${v.season_stats.receiving_stats.yards}</td>
+                                <td class="text-center">${v.season_stats.receiving_stats.touchdowns}</td>
+                                <td class="text-center">${v.season_stats.receiving_stats.longest}</td>
+                                <td class="text-center">${v.season_stats.receiving_stats.per_game}</td>
+                                <td class="text-center">${v.season_stats.receiving_stats.yards_comp_pct}</td>
+                                <td class="text-center">${v.season_stats.receiving_stats.yards_game_pct}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["REC"]}</td>
+                                	<td class="text-center">${total["YDS"]}</td>
+                                	<td class="text-center">${total["TD"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["REC/G"]}</td>
+                                    <td class="text-center">${total["AVG/C"]}</td>
+                                    <td class="text-center">${total["AVG/G"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        // Scoring
+        let show_scoring_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.scoring_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+    
+            return false;
+        };
+
+        if (show_scoring_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Scoring Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Scoring Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">TD</th>
+                                    <th scope="col" class="text-center">Rush</th>
+                                    <th scope="col" class="text-center">REC</th>
+                                    <th scope="col" class="text-center">RET</th>
+                                    <th scope="col" class="text-center">FG</th>
+                                    <th scope="col" class="text-center">PAT</th>
+                                    <th scope="col" class="text-center">2PT</th>
+                                    <th scope="col" class="text-center">TOT</th>
+                                    <th scope="col" class="text-center">AVG/G</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.scoring_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "TD": v.season_stats.scoring_stats.touchdowns,
+                        "Rush": v.season_stats.scoring_stats.rush_td,
+                        "REC": v.season_stats.scoring_stats.rcpt_td,
+                        "RET": v.season_stats.scoring_stats.return,
+                        "FG": v.season_stats.scoring_stats.fieldgoals,
+                        "PAT": v.season_stats.scoring_stats.extra_point,
+                        "2PT": v.season_stats.scoring_stats["2_pt_conv"],
+                        "TOT": v.season_stats.scoring_stats.points,
+                        "AVG/G": v.season_stats.scoring_stats.point_avg
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["TD"] = determineSum(total["TD"], v.season_stats.scoring_stats.touchdowns);
+                    total["Rush"] = determineSum(total["Rush"], v.season_stats.scoring_stats.rush_td);
+                    total["REC"] = determineSum(total["REC"], v.season_stats.scoring_stats.rcpt_td);
+                    total["RET"] = determineSum(total["RET"], v.season_stats.scoring_stats.return);
+                    total["FG"] = determineSum(total["FG"], v.season_stats.scoring_stats.fieldgoals);
+                    total["PAT"] = determineSum(total["PAT"], v.season_stats.scoring_stats.extra_point);
+                    total["2PT"] = determineSum(total["2PT"], v.season_stats.scoring_stats["2_pt_conv"]);
+                    total["TOT"] = determineSum(total["TOT"], v.season_stats.scoring_stats.points);
+                    total["AVG/G"] = safe_divide(total["TOT"], total["GP"]).toFixed(1);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.touchdowns}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.rush_td}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.rcpt_td}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.return}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.fieldgoals}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.extra_point}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats["2_pt_conv"]}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.points}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.point_avg}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["TD"]}</td>
+                                    <td class="text-center">${total["Rush"]}</td>
+                                    <td class="text-center">${total["REC"]}</td>
+                                    <td class="text-center">${total["RET"]}</td>
+                                    <td class="text-center">${total["FG"]}</td>
+                                    <td class="text-center">${total["PAT"]}</td>
+                                    <td class="text-center">${total["2PT"]}</td>
+                                    <td class="text-center">${total["TOT"]}</td>
+                                    <td class="text-center">${total["AVG/G"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        // Punt
+        let show_punt_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.punt_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+            
+            return false;
+        };
+
+        if (show_punt_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Punting Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Punting Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">ATT</th>
+                                    <th scope="col" class="text-center">YDS</th>
+                                    <th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">AVG</th>
+                                    <th scope="col" class="text-center">TB</th>
+                                    <th scope="col" class="text-center">FC</th>
+                                    <th scope="col" class="text-center">I20</th>
+                                    <th scope="col" class="text-center">50+</th>
+                                    <th scope="col" class="text-center">BLK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.punt_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "ATT": v.season_stats.punt_stats.attempts,
+                        "YDS": v.season_stats.punt_stats.punt_yards,
+                        "Long": v.season_stats.punt_stats.longest,
+                        "AVG": v.season_stats.punt_stats.yards_punt_avg,
+                        "TB": v.season_stats.punt_stats.touchbacks,
+                        "FC": v.season_stats.punt_stats.fair_catch,
+                        "I20": v.season_stats.punt_stats.inside_twenty,
+                        "50+": v.season_stats.punt_stats.over_fifty,
+                        "BLK": v.season_stats.punt_stats.blocked
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["ATT"] = determineSum(total["ATT"], v.season_stats.punt_stats.attempts);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.punt_stats.punt_yards);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.punt_stats.longest);
+                    total["AVG"] = safe_divide(total["YDS"], total["ATT"]).toFixed(1);
+                    total["TB"] = determineSum(total["TB"], v.season_stats.punt_stats.touchbacks);
+                    total["FC"] = determineSum(total["FC"], v.season_stats.punt_stats.fair_catch);
+                    total["I20"] = determineSum(total["I20"], v.season_stats.punt_stats.inside_twenty);
+                    total["50+"] = determineSum(total["50+"], v.season_stats.punt_stats.over_fifty);
+                    total["BLK"] = determineSum(total["BLK"], v.season_stats.punt_stats.blocked);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.attempts}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.punt_yards}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.longest}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.yards_punt_avg}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.touchbacks}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.fair_catch}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.inside_twenty}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.over_fifty}</td>
+                                <td class="text-center">${v.season_stats.punt_stats.blocked}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["ATT"]}</td>
+                                    <td class="text-center">${total["YDS"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["AVG"]}</td>
+                                    <td class="text-center">${total["TB"]}</td>
+                                    <td class="text-center">${total["FC"]}</td>
+                                    <td class="text-center">${total["I20"]}</td>
+                                    <td class="text-center">${total["50+"]}</td>
+                                    <td class="text-center">${total["BLK"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        // Kickoff
+        let show_kickoff_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.kickoff_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_kickoff_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Kickoff Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Kickoff Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">ATT</th>
+                                    <th scope="col" class="text-center">YDS</th>
+                                    <th scope="col" class="text-center">AVG</th>
+                                    <th scope="col" class="text-center">TB</th>
+                                    <th scope="col" class="text-center">OB</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.kickoff_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "ATT": v.season_stats.kickoff_stats.attempts,
+                        "YDS": v.season_stats.kickoff_stats.yards,
+                        "AVG": v.season_stats.kickoff_stats.attempt_avg,
+                        "TB": v.season_stats.kickoff_stats.touchbacks,
+                        "OB": v.season_stats.kickoff_stats.out_of_bounds
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["ATT"] = determineSum(total["ATT"], v.season_stats.kickoff_stats.attempts);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.kickoff_stats.yards);
+                    total["AVG"] = safe_divide(total["YDS"], total["ATT"]).toFixed(1);
+                    total["TB"] = determineSum(total["TB"], v.season_stats.kickoff_stats.touchbacks);
+                    total["OB"] = determineSum(total["OB"], v.season_stats.kickoff_stats.out_of_bounds);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.kickoff_stats.attempts}</td>
+                                <td class="text-center">${v.season_stats.kickoff_stats.yards}</td>
+                                <td class="text-center">${v.season_stats.kickoff_stats.attempt_avg.replace(".0", "0")}</td>
+                                <td class="text-center">${v.season_stats.kickoff_stats.touchbacks}</td>
+                                <td class="text-center">${v.season_stats.kickoff_stats.out_of_bounds}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["ATT"]}</td>
+                                    <td class="text-center">${total["YDS"]}</td>
+                                    <td class="text-center">${total["AVG"]}</td>
+                                    <td class="text-center">${total["TB"]}</td>
+                                    <td class="text-center">${total["OB"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        // Field Goal
+        let show_field_goal_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.field_goal_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_field_goal_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Field Goal Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Field Goal Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">Made</th>
+                                    <th scope="col" class="text-center">Att</th>
+                                    <th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">Pct</th>
+                                    <th scope="col" class="text-center">Blkd</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.field_goal_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "Made": v.season_stats.field_goal_stats.made,
+                        "Att": v.season_stats.field_goal_stats.attempt,
+                        "Long": v.season_stats.field_goal_stats.longest,
+                        "Pct": v.season_stats.field_goal_stats.made_pct,
+                        "Blkd": v.season_stats.field_goal_stats.blocked
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["Made"] = determineSum(total["Made"], v.season_stats.field_goal_stats.made);
+                    total["Att"] = determineSum(total["Att"], v.season_stats.field_goal_stats.attempt);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.field_goal_stats.longest);
+                    total["Pct"] = (safe_divide(total["Made"], total["Att"]) * 100).toFixed(2);
+                    total["Blkd"] = determineSum(total["Blkd"], v.season_stats.field_goal_stats.blocked);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.field_goal_stats.made}</td>
+                                <td class="text-center">${v.season_stats.field_goal_stats.attempt}</td>
+                                <td class="text-center">${v.season_stats.field_goal_stats.longest}</td>
+                                <td class="text-center">${v.season_stats.field_goal_stats.made_pct}</td>
+                                <td class="text-center">${v.season_stats.field_goal_stats.blocked}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["Made"]}</td>
+                                    <td class="text-center">${total["Att"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["Pct"]}</td>
+                                    <td class="text-center">${total["Blkd"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                        </div>
+                    </section>`;
+        }
+
+        // Kick Return
+        let show_kick_return_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.kick_return_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_kick_return_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Kick Return Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Kick Return Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">ATT</th>
+                                    <th scope="col" class="text-center">YDS</th>
+                                    <th scope="col" class="text-center">TD</th>
+                                    <th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">AVG/R</th>
+                                    <th scope="col" class="text-center">AVG/G</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.kick_return_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "ATT": v.season_stats.kick_return_stats.attempt,
+                        "YDS": v.season_stats.kick_return_stats.yards,
+                        "TD": v.season_stats.kick_return_stats.touchdowns,
+                        "Long": v.season_stats.kick_return_stats.longest,
+                        "AVG/R": v.season_stats.kick_return_stats.return_attempt_yards,
+                        "AVG/G": v.season_stats.kick_return_stats.yards_per_game
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["ATT"] = determineSum(total["ATT"], v.season_stats.kick_return_stats.attempt);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.kick_return_stats.yards);
+                    total["TD"] = determineSum(total["TD"], v.season_stats.kick_return_stats.touchdowns);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.kick_return_stats.longest);
+                    total["AVG/R"] = safe_divide(total["YDS"], total["ATT"]).toFixed(1);
+                    total["AVG/G"] = safe_divide(total["YDS"], total["GP"]).toFixed(1);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.kick_return_stats.attempt}</td>
+                                <td class="text-center">${v.season_stats.kick_return_stats.yards}</td>
+                                <td class="text-center">${v.season_stats.kick_return_stats.touchdowns}</td>
+                                <td class="text-center">${v.season_stats.kick_return_stats.longest}</td>
+                                <td class="text-center">${v.season_stats.kick_return_stats.return_attempt_yards}</td>
+                                <td class="text-center">${v.season_stats.kick_return_stats.yards_per_game}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["ATT"]}</td>
+                                    <td class="text-center">${total["YDS"]}</td>
+                                    <td class="text-center">${total["TD"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["AVG/R"]}</td>
+                                    <td class="text-center">${total["AVG/G"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                        </div>
+                    </section>`;
+        }
+
+        // Punt Return
+        let show_punt_return_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.punt_return_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_punt_return_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Punt Return Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Punt Return Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">ATT</th>
+                                    <th scope="col" class="text-center">YDS</th>
+                                    <th scope="col" class="text-center">TD</th>
+                                    <th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">AVG/R</th>
+                                    <th scope="col" class="text-center">AVG/G</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.punt_return_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "ATT": v.season_stats.punt_return_stats.attempt,
+                        "YDS": v.season_stats.punt_return_stats.yards,
+                        "TD": v.season_stats.punt_return_stats.touchdowns,
+                        "Long": v.season_stats.punt_return_stats.longest,
+                        "AVG/R": v.season_stats.punt_return_stats.return_per_att_avg,
+                        "AVG/G": v.season_stats.punt_return_stats.yards_avg
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["ATT"] = determineSum(total["ATT"], v.season_stats.punt_return_stats.attempt);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.punt_return_stats.yards);
+                    total["TD"] = determineSum(total["TD"], v.season_stats.punt_return_stats.touchdowns);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.punt_return_stats.longest);
+                    total["AVG/R"] = safe_divide(total["YDS"], total["ATT"]).toFixed(1);
+                    total["AVG/G"] = safe_divide(total["YDS"], total["GP"]).toFixed(1);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.punt_return_stats.attempt}</td>
+                                <td class="text-center">${v.season_stats.punt_return_stats.yards}</td>
+                                <td class="text-center">${v.season_stats.punt_return_stats.touchdowns}</td>
+                                <td class="text-center">${v.season_stats.punt_return_stats.longest}</td>
+                                <td class="text-center">${v.season_stats.punt_return_stats.return_per_att_avg}</td>
+                                <td class="text-center">${v.season_stats.punt_return_stats.yards_avg}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["ATT"]}</td>
+                                    <td class="text-center">${total["YDS"]}</td>
+                                    <td class="text-center">${total["TD"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["AVG/R"]}</td>
+                                    <td class="text-center">${total["AVG/G"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                        </div>
+                    </section>`;
+        }
+
+        // Interception
+        let show_interception_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.interception_return_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_interception_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Interception Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Interception Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">NO</th>
+                                    <th scope="col" class="text-center">YDS</th>
+                                    <th scope="col" class="text-center">TD</th>
+                                    <th scope="col" class="text-center">Long</th>
+                                    <th scope="col" class="text-center">AVG/R</th>
+                                    <th scope="col" class="text-center">AVG/G</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.interception_return_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "NO": v.season_stats.interception_return_stats.number,
+                        "YDS": v.season_stats.interception_return_stats.yards,
+                        "TD": v.season_stats.interception_return_stats.touchdowns,
+                        "Long": v.season_stats.interception_return_stats.longest,
+                        "AVG/R": v.season_stats.interception_return_stats.yards_per_game_avg,
+                        "AVG/G": v.season_stats.interception_return_stats.yards_per_int_avg
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["NO"] = determineSum(total["NO"], v.season_stats.interception_return_stats.number);
+                    total["YDS"] = determineSum(total["YDS"], v.season_stats.interception_return_stats.yards);
+                    total["TD"] = determineSum(total["TD"], v.season_stats.interception_return_stats.touchdowns);
+                    total["Long"] = Math.max(total["Long"], v.season_stats.interception_return_stats.longest);
+                    total["AVG/R"] = safe_divide(total["YDS"], total["NO"]).toFixed(1);
+                    total["AVG/G"] = safe_divide(total["YDS"], total["GP"]).toFixed(1);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.interception_return_stats.number}</td>
+                                <td class="text-center">${v.season_stats.interception_return_stats.yards}</td>
+                                <td class="text-center">${v.season_stats.interception_return_stats.touchdowns}</td>
+                                <td class="text-center">${v.season_stats.interception_return_stats.longest}</td>
+                                <td class="text-center">${v.season_stats.interception_return_stats.yards_per_game_avg}</td>
+                                <td class="text-center">${v.season_stats.interception_return_stats.yards_per_int_avg}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["NO"]}</td>
+                                    <td class="text-center">${total["YDS"]}</td>
+                                    <td class="text-center">${total["TD"]}</td>
+                                    <td class="text-center">${total["Long"]}</td>
+                                    <td class="text-center">${total["AVG/R"]}</td>
+                                    <td class="text-center">${total["AVG/G"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                        </div>
+                    </section>`;
+        }
+
+        // Defensive
+        let show_defense_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.defense_stats) {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_defense_table()) {
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Defense Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Defense Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">SOLO</th>
+                                    <th scope="col" class="text-center">AST</th>
+                                    <th scope="col" class="text-center">TOT</th>
+                                    <th scope="col" class="text-center">TFL-YDS</th>
+                                    <th scope="col" class="text-center">SACKS-YDS</th>
+                                    <th scope="col" class="text-center">INT</th>
+                                    <th scope="col" class="text-center">PD</th>
+                                    <th scope="col" class="text-center">FF</th>
+                                    <th scope="col" class="text-center">FR</th>
+                                    <th scope="col" class="text-center">BLK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.defense_stats) continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "SOLO": v.season_stats.defense_stats.solo,
+                        "AST": v.season_stats.defense_stats.assist,
+                        "TOT": v.season_stats.defense_stats.total,
+                        "TFL-YDS": v.season_stats.defense_stats.tfl_yards,
+                        "SACK-YDS": v.season_stats.defense_stats.sacks_yards,
+                        "INT": v.season_stats.defense_stats.interceptions,
+                        "PD": v.season_stats.defense_stats.pass_defl,
+                        "FF": v.season_stats.defense_stats.forced_fumble,
+                        "FR": v.season_stats.defense_stats.fumb_rec,
+                        "BLK": v.season_stats.defense_stats.blocked
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["SOLO"] = determineSum(total["SOLO"], v.season_stats.defense_stats.solo);
+                    total["AST"] = determineSum(total["AST"], v.season_stats.defense_stats.assist);
+                    total["TOT"] = determineSum(total["TOT"], v.season_stats.defense_stats.total);
+                    total["TFL-YDS"] = determineSum(total["TFL-YDS"], v.season_stats.defense_stats.tfl_yards);
+                    total["SACK-YDS"] = determineSum(total["SACK-YDS"], v.season_stats.defense_stats.sacks_yards);
+                    total["INT"] = determineSum(total["INT"], v.season_stats.defense_stats.interceptions);
+                    total["PD"] = determineSum(total["PD"], v.season_stats.defense_stats.pass_defl);
+                    total["FF"] = determineSum(total["FF"], v.season_stats.defense_stats.forced_fumble);
+                    total["FR"] = determineSum(total["FR"], v.season_stats.defense_stats.fumb_rec);
+                    total["BLK"] = determineSum(total["BLK"], v.season_stats.defense_stats.blocked);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.solo}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.assist}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.total}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.tfl_yards}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.sacks_yards}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.interceptions}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.pass_defl}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.forced_fumble}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.fumb_rec}</td>
+                                <td class="text-center">${v.season_stats.defense_stats.blocked}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["SOLO"]}</td>
+                                    <td class="text-center">${total["AST"]}</td>
+                                    <td class="text-center">${total["TOT"]}</td>
+                                    <td class="text-center">${total["TFL-YDS"]}</td>
+                                    <td class="text-center">${total["SACK-YDS"]}</td>
+                                    <td class="text-center">${total["INT"]}</td>
+                                    <td class="text-center">${total["PD"]}</td>
+                                    <td class="text-center">${total["FF"]}</td>
+                                    <td class="text-center">${total["FR"]}</td>
+                                    <td class="text-center">${total["BLK"]}</td>
+                                </tr>
+                            </tfoot>`;
+
+            html += `</table>
+                        </div>
+                    </section>`;
+        }
+
+        if (!has_stats) html = "There are no statistics available for this player.";
+    }
+
+    // ================= FIELD HOCKEY =================
+    if (path === "fhockey") {
+        let show_goalie_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.goalie_stats && v.season_stats.goalie_stats.games_played !== "0") {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_goalie_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Goalkeeping Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Goalkeeping Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">MIN</th>
+                                    <th scope="col" class="text-center">GA</th>
+                                    <th scope="col" class="text-center">GA/AVG</th>
+                                    <th scope="col" class="text-center">SV</th>
+                                    <th scope="col" class="text-center">SV%</th>
+                                    <th scope="col" class="text-center">W</th>
+                                    <th scope="col" class="text-center">L</th>
+                                    <th scope="col" class="text-center">T</th>
+                                    <th scope="col" class="text-center">SHO</th>
+                                    <th scope="col" class="text-center">SF</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+            let initial = true;
+            total = {};
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.season_stats.goalie_stats.games_played === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.season_stats.goalie_stats.games_played,
+                        "MIN": v.season_stats.goalie_stats.minutes,
+                        "GA": v.season_stats.goalie_stats.goals_against,
+                        "GA/AVG": v.season_stats.goalie_stats.goals_against_avg,
+                        "SV": v.season_stats.goalie_stats.saves,
+                        "SV%": v.season_stats.goalie_stats.save_pct,
+                        "W": v.season_stats.goalie_stats.win,
+                        "L": v.season_stats.goalie_stats.loss,
+                        "T": v.season_stats.goalie_stats.tie,
+                        "SHO": v.season_stats.goalie_stats.shutouts,
+                        "SF": v.season_stats.goalie_stats.shots_faced
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.season_stats.goalie_stats.games_played);
+                    total["MIN"] = determineSum(total["MIN"], v.season_stats.goalie_stats.minutes);
+                    total["GA"] = determineSum(total["GA"], v.season_stats.goalie_stats.goals_against);
+                    total["GA/AVG"] = safe_divide(total["GA"] * 60, to_minutes(total["MIN"])).toFixed(2);
+                    total["SV"] = determineSum(total["SV"], v.season_stats.goalie_stats.saves);
+                    total["SV%"] = safe_divide(total["SV"], total["SV"] + total["GA"]).toFixed(3);
+                    total["W"] = determineSum(total["W"], v.season_stats.goalie_stats.win);
+                    total["L"] = determineSum(total["L"], v.season_stats.goalie_stats.loss);
+                    total["T"] = determineSum(total["T"], v.season_stats.goalie_stats.tie);
+                    total["SHO"] = determineSum(total["SHO"], v.season_stats.goalie_stats.shutouts);
+                    total["SF"] = determineSum(total["SF"], v.season_stats.goalie_stats.shots_faced);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.season_stats.goalie_stats.games_played}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.minutes}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.goals_against}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.goals_against_avg}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.saves}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.save_pct}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.win}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.loss}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.tie}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.shutouts}</td>
+                                <td class="text-center">${v.season_stats.goalie_stats.shots_faced}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="text-center">${total["GP"]}</td>
+                                <td class="text-center">${total["MIN"]}</td>
+                                <td class="text-center">${total["GA"]}</td>
+                                <td class="text-center">${total["GA/AVG"]}</td>
+                                <td class="text-center">${total["SV"]}</td>
+                                <td class="text-center">${total["SV%"]}</td>
+                                <td class="text-center">${total["W"]}</td>
+                                <td class="text-center">${total["L"]}</td>
+                                <td class="text-center">${total["T"]}</td>
+                                <td class="text-center">${total["SHO"]}</td>
+                                <td class="text-center">${total["SF"]}</td>
+                            </tr>
+                        </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        initial = true;
+
+        let show_scoring_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.scoring_stats && v.gp !== "0") {
+                    has_stats = true;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (show_scoring_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Scoring Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Scoring Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">GS</th>
+                                    <th scope="col" class="text-center">G</th>
+                                    <th scope="col" class="text-center">A</th>
+                                    <th scope="col" class="text-center">PTS</th>
+                                    <th scope="col" class="text-center">SH</th>
+                                    <th scope="col" class="text-center">SH%</th>
+                                    <th scope="col" class="text-center">SOG</th>
+                                    <th scope="col" class="text-center">SOG%</th>
+                                    <th scope="col" class="text-center">GW</th>
+                                    <th scope="col" class="text-center">PS-ATT</th>
+                                    <th scope="col" class="text-center">MIN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.gp === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.gp,
+                        "GS": v.gs,
+                        "G": v.season_stats.scoring_stats.goals,
+                        "A": v.season_stats.scoring_stats.assists,
+                        "PTS": v.season_stats.scoring_stats.points,
+                        "SH": v.season_stats.scoring_stats.shots,
+                        "SH%": v.season_stats.scoring_stats.shot_pct,
+                        "SOG": v.season_stats.scoring_stats.shots_on_goal,
+                        "SOG%": v.season_stats.scoring_stats.shots_on_goal_pct,
+                        "GW": v.season_stats.scoring_stats.game_winning_goals,
+                        "PS-ATT": v.season_stats.scoring_stats.penalty_shot_goals + "-" + v.season_stats.scoring_stats.penalty_shot_attempts,
+                        "MIN": v.min
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.gp);
+                    total["GS"] = determineSum(total["GS"], v.gs);
+                    total["G"] = determineSum(total["G"], v.season_stats.scoring_stats.goals);
+                    total["A"] = determineSum(total["A"], v.season_stats.scoring_stats.assists);
+                    total["PTS"] = determineSum(total["PTS"], v.season_stats.scoring_stats.points);
+                    total["SH"] = determineSum(total["SH"], v.season_stats.scoring_stats.shots);
+                    total["SH%"] = safe_divide(total["G"], total["SH"]).toFixed(3);
+                    total["SOG"] = determineSum(total["SOG"], v.season_stats.scoring_stats.shots_on_goal);
+                    total["SOG%"] = safe_divide(total["SOG"], total["SH"]).toFixed(3);
+                    total["GW"] = determineSum(total["GW"], v.season_stats.scoring_stats.game_winning_goals);
+                    total["PS-ATT"] = determineSum(total["PS-ATT"], v.season_stats.scoring_stats.penalty_shot_goals + "-" + v.season_stats.scoring_stats.penalty_shot_attempts);
+                    total["MIN"] = determineSum(total["MIN"], v.min);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.gp}</td>
+                                <td class="text-center">${v.gs}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.goals}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.assists}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.points}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.shots}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.shot_pct}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.shots_on_goal}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.shots_on_goal_pct}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.game_winning_goals}</td>
+                                <td class="text-center">${v.season_stats.scoring_stats.penalty_shot_goals + "-" + v.season_stats.scoring_stats.penalty_shot_attempts}</td>
+                                <td class="text-center">${v.min}</td>
+                        	</th>
+                        </tr>`;
+            }
+            html += `</tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="text-center">${total["GP"]}</td>
+                                <td class="text-center">${total["GS"]}</td>
+                                <td class="text-center">${total["G"]}</td>
+                                <td class="text-center">${total["A"]}</td>
+                                <td class="text-center">${total["PTS"]}</td>
+                                <td class="text-center">${total["SH"]}</td>
+                                <td class="text-center">${total["SH%"] === "0.000" ? "0" : total["SH%"]}</td>
+                                <td class="text-center">${total["SOG"]}</td>
+                                <td class="text-center">${total["SOG%"] === "0.000" ? "0" : total["SOG%"]}</td>
+                                <td class="text-center">${total["GW"]}</td>
+                                <td class="text-center">${total["PS-ATT"]}</td>
+                                <td class="text-center">${total["MIN"]}</td>
+                            </tr>
+                        </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        if (!has_stats) html = "There are no statistics available for this player.";
+    }
+
+    // ================= LACROSSE =================
+    if (path === "lacrosse") {
+        let show_goalie_table = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.season_stats.goalie_stats && v.season_stats.goalie_stats.games_played !== "0") {
+                    has_stats = true;
+                    return true;
+                }
+            }
+            
+            return false;
+        };
+
+        if (show_goalie_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Goalkeeping Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Goalkeeping Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">MIN</th>
+                                    <th scope="col" class="text-center">GA</th>
+                                    <th scope="col" class="text-center">GA/AVG</th>
+                                    <th scope="col" class="text-center">SV</th>
+                                    <th scope="col" class="text-center">SV%</th>
+                                    <th scope="col" class="text-center">W</th>
+                                    <th scope="col" class="text-center">L</th>
+                                    <th scope="col" class="text-center">T</th>
+                                    <th scope="col" class="text-center">SHO</th>
+                                    <th scope="col" class="text-center">SF</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+            let initial = true;
+            total = {};
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (!v.season_stats.goalie_stats || v.season_stats.goalie_stats.game_played === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.season_stats.goalie_stats.game_played,
+                        "MIN": v.season_stats.goalie_stats.min,
+                        "GA": v.season_stats.goalie_stats.goals_allowed,
+                        "GA/AVG": v.season_stats.goalie_stats.goals_against_avg,
+                        "SV": v.season_stats.goalie_stats.saves,
+                        "SV%": v.season_stats.goalie_stats.save_pct,
+                        "W": v.season_stats.goalie_stats.win,
+                        "L": v.season_stats.goalie_stats.loss,
+                        "T": v.season_stats.goalie_stats.tie,
+                        "SHO": v.season_stats.goalie_stats.goalie_sho,
+                        "SF": v.season_stats.goalie_stats.goalie_sf
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.season_stats.goalie_stats.game_played);
+                    total["MIN"] = determineSum(total["MIN"], v.season_stats.goalie_stats.min);
+                    total["GA"] = determineSum(total["GA"], v.season_stats.goalie_stats.goals_allowed);
+                    total["GA/AVG"] = safe_divide(total["GA"] * 60, to_minutes(total["MIN"])).toFixed(2).replace(/^0+/, "");
+                    total["SV"] = determineSum(total["SV"], v.season_stats.goalie_stats.saves);
+                    total["SV%"] = safe_divide(total["SV"], total["SV"] + total["GA"]).toFixed(3).replace(/^0+/, "");
+                    total["W"] = determineSum(total["W"], v.season_stats.goalie_stats.win);
+                    total["L"] = determineSum(total["L"], v.season_stats.goalie_stats.loss);
+                    total["T"] = determineSum(total["T"], v.season_stats.goalie_stats.tie);
+                    total["SHO"] = determineSum(total["SHO"], v.season_stats.goalie_stats.goalie_sho);
+                    total["SF"] = determineSum(total["SF"], v.season_stats.goalie_stats.goalie_sf);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                            <td class="text-center">${v.season_stats.goalie_stats.game_played}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.min}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.goals_allowed}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.goals_against_avg}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.saves}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.save_pct}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.win}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.loss}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.tie}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.goalie_sho}</td>
+                            <td class="text-center">${v.season_stats.goalie_stats.goalie_sf}</td>
+                         </tr>`;
+            }
+            html += `</tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="text-center">${total["GP"]}</td>
+                                <td class="text-center">${total["MIN"]}</td>
+                                <td class="text-center">${total["GA"]}</td>
+                                <td class="text-center">${total["GA/AVG"]}</td>
+                                <td class="text-center">${total["SV"]}</td>
+                                <td class="text-center">${total["SV%"]}</td>
+                                <td class="text-center">${total["W"]}</td>
+                                <td class="text-center">${total["L"]}</td>
+                                <td class="text-center">${total["T"]}</td>
+                                <td class="text-center">${total["SHO"]}</td>
+                                <td class="text-center">${total["SF"]}</td>
+                            </tr>
+                        </tfoot>`;
+
+            html += `</table>
+                    </div>
+                </section>`;
+        }
+
+        initial = true;
+
+        let its_womens = global_sport_id === 16;
+        let show_scoring_table = () => {
+           for (const [k, v] of Object.entries(response)) {
+               if (v.season_stats.scoring_stats && v.game_played !== "0") {
+                   has_stats = true;
+                   return true;
+               }
+           }
+    
+           return false;
+        };
+
+        if (show_scoring_table()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Scoring Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Scoring Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">GP</th>
+                                    <th scope="col" class="text-center">GS</th>
+                                    <th scope="col" class="text-center">G</th>
+                                    <th scope="col" class="text-center">A</th>
+                                    <th scope="col" class="text-center">PTS</th>
+                                    <th scope="col" class="text-center">SH</th>
+                                    <th scope="col" class="text-center">SH%</th>
+                                    <th scope="col" class="text-center">SOG</th>
+                                    <th scope="col" class="text-center">SOG%</th>
+                                    <th scope="col" class="text-center">GW</th>
+                                    <th scope="col" class="text-center">UP</th>
+                                    <th scope="col" class="text-center">DN</th>
+                                    <th scope="col" class="text-center">GB</th>
+                                    <th scope="col" class="text-center">TO</th>
+                                    <th scope="col" class="text-center">CTO</th>`;
+            if (its_womens) {
+                html += `           <th scope="col" class="text-center">DC</th>`;
+            } else {
+                html += `           <th scope="col" class="text-center">FO</th>
+                                    <th scope="col" class="text-center">FO%</th>`;
+            }
+            html += `           </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.game_played === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "GP": v.game_played,
+                        "GS": v.game_started,
+                        "G": v.season_stats.scoring_stats.goals,
+                        "A": v.season_stats.scoring_stats.assists,
+                        "PTS": v.season_stats.scoring_stats.points,
+                        "SH": v.season_stats.scoring_stats.shots,
+                        "SH%": v.season_stats.scoring_stats.shot_pct,
+                        "SOG": v.season_stats.scoring_stats.shots_on_goal,
+                        "SOG%": v.season_stats.scoring_stats.shots_on_goal_pct,
+                        "GW": v.season_stats.scoring_stats.game_winning_goals,
+                        "UP": v.season_stats.scoring_stats.up_goals,
+                        "DN": v.season_stats.scoring_stats.down_goals,
+                        "GB": v.season_stats.scoring_stats.ground_balls,
+                        "TO": v.season_stats.scoring_stats.turnovers,
+                        "CTO": v.season_stats.scoring_stats.caused_turnovers,
+                        "DC": v.season_stats.scoring_stats.draw_controls,
+                        "FO": v.season_stats.scoring_stats.faceoffs_won + "-" + v.season_stats.scoring_stats.faceoff_attempts,
+                        "FOW": v.season_stats.scoring_stats.faceoffs_won,
+                        "FOA": v.season_stats.scoring_stats.faceoff_attempts,
+                        "FO%": v.season_stats.scoring_stats.faceoff_win_percentage
+                    };
+                    initial = false;
+                } else {
+                    total["GP"] = determineSum(total["GP"], v.game_played);
+                    total["GS"] = determineSum(total["GS"], v.game_started);
+                    total["G"] = determineSum(total["G"], v.season_stats.scoring_stats.goals);
+                    total["A"] = determineSum(total["A"], v.season_stats.scoring_stats.assists);
+                    total["PTS"] = determineSum(total["PTS"], v.season_stats.scoring_stats.points);
+                    total["SH"] = determineSum(total["SH"], v.season_stats.scoring_stats.shots);
+                    total["SH%"] = safe_divide(total["G"], total["SH"]).toFixed(3).replace(/^0+/, "");
+                    total["SOG"] = determineSum(total["SOG"], v.season_stats.scoring_stats.shots_on_goal);
+                    total["SOG%"] = safe_divide(total["SOG"], total["SH"]).toFixed(3).replace(/^0+/, "");
+                    total["GW"] = determineSum(total["GW"], v.season_stats.scoring_stats.game_winning_goals);
+                    total["UP"] = determineSum(total["UP"], v.season_stats.scoring_stats.up_goals);
+                    total["DN"] = determineSum(total["DN"], v.season_stats.scoring_stats.down_goals);
+                    total["GB"] = determineSum(total["GB"], v.season_stats.scoring_stats.ground_balls);
+                    total["TO"] = determineSum(total["TO"], v.season_stats.scoring_stats.turnovers);
+                    total["CTO"] = determineSum(total["CTO"], v.season_stats.scoring_stats.caused_turnovers);
+                    total["DC"] = determineSum(total["DC"], v.season_stats.scoring_stats.draw_controls);
+                    total["FO"] = determineSum(total["FO"], v.season_stats.scoring_stats.faceoffs_won + "-" + v.season_stats.scoring_stats.faceoff_attempts);
+                    total["FOW"] = determineSum(total["FOW"], v.season_stats.scoring_stats.faceoffs_won);
+                    total["FOA"] = determineSum(total["FOA"], v.season_stats.scoring_stats.faceoff_attempts);
+                    total["FO%"] = safe_divide(total["FOW"], total["FOA"]).toFixed(3).replace(/^0+/, "");
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                            <td class="text-center">${v.game_played}</td>
+                            <td class="text-center">${v.game_started}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.goals}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.assists}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.points}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.shots}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.shot_pct}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.shots_on_goal}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.shots_on_goal_pct}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.game_winning_goals}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.up_goals}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.down_goals}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.ground_balls}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.turnovers}</td>
+                            <td class="text-center">${v.season_stats.scoring_stats.caused_turnovers}</td>`;
+                if (its_womens) {
+                    html += `<td class="text-center">${v.season_stats.scoring_stats.draw_controls}</td>`;
+                } else {
+                    html += `<td class="text-center">${v.season_stats.scoring_stats.faceoffs_won + "-" + v.season_stats.scoring_stats.faceoff_attempts}</td>
+                             <td class="text-center">${v.season_stats.scoring_stats.faceoff_win_percentage}</td>`;
+                }
+            }
+            html += `   </tr>    
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td class="text-center">${total["GP"]}</td>
+                                    <td class="text-center">${total["GS"]}</td>
+                                    <td class="text-center">${total["G"]}</td>
+                                    <td class="text-center">${total["A"]}</td>
+                                    <td class="text-center">${total["PTS"]}</td>
+                                    <td class="text-center">${total["SH"]}</td>
+                                    <td class="text-center">${total["SH%"]}</td>
+                                    <td class="text-center">${total["SOG"]}</td>
+                                    <td class="text-center">${total["SOG%"]}</td>
+                                    <td class="text-center">${total["GW"]}</td>
+                                    <td class="text-center">${total["UP"]}</td>
+                                    <td class="text-center">${total["DN"]}</td>
+                                    <td class="text-center">${total["GB"]}</td>
+                                    <td class="text-center">${total["TO"]}</td>
+                                    <td class="text-center">${total["CTO"]}</td>`;
+            if (its_womens) {
+                html += `           <td class="text-center">${total["DC"]}</td>`;
+            } else {
+                html += `           <td class="text-center">${total["FO"]}</td>
+                                    <td class="text-center">${total["FO%"]}</td>`;
+            }
+
+            html += `               </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+               </section>`;
+        }
+
+        if (!has_stats) html = "There are no statistics available for this player.";
+    }
+
+    // ================= VOLLEYBALL =================
+    if (path === "volleyball") {
+        let has_sets_played = () => {
+            for (const [k, v] of Object.entries(response)) {
+                if (v.sp !== "0") {
+                    return true;
+                }
+            }
+        };
+    
+        if (has_sets_played()) {
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Offensive Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Offensive Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">SP</th>
+                                    <th scope="col" class="text-center">MP</th>
+                                    <th scope="col" class="text-center">K</th>
+                                    <th scope="col" class="text-center">K/S</th>
+                                    <th scope="col" class="text-center">E</th>
+                                    <th scope="col" class="text-center">TA</th>
+                                    <th scope="col" class="text-center">%</th>
+                                    <th scope="col" class="text-center">A</th>
+                                    <th scope="col" class="text-center">A/S</th>
+                                    <th scope="col" class="text-center">SA</th>
+                                    <th scope="col" class="text-center">SA/S</th>
+                                    <th scope="col" class="text-center">SE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+            let initial = true;
+            total = {};
+
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.sp === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "SP": v.sp,
+                        "MP": v.mp,
+                        "K": v.season_stats.offensive_stats.kills,
+                        "E": v.season_stats.offensive_stats.errors,
+                        "TA": v.season_stats.offensive_stats.total_attempts,
+                        "HP": v.season_stats.offensive_stats.hitting_percentage,
+                        "A": v.season_stats.offensive_stats.assists,
+                        "SA": v.season_stats.offensive_stats.service_aces,
+                        "SE": v.season_stats.offensive_stats.service_errors
+                    };
+                    initial = false;
+                } else {
+                    total["SP"] = determineSum(total["SP"], v.sp);
+                    total["MP"] = determineSum(total["MP"], v.mp);
+                    total["K"] = determineSum(total["K"], v.season_stats.offensive_stats.kills);
+                    total["E"] = determineSum(total["E"], v.season_stats.offensive_stats.errors);
+                    total["TA"] = determineSum(total["TA"], v.season_stats.offensive_stats.total_attempts);
+                    total["HP"] = safe_divide((total["K"] - total["E"]), total["TA"]).toFixed(3);
+                    total["A"] = determineSum(total["A"], v.season_stats.offensive_stats.assists);
+                    total["SA"] = determineSum(total["SA"], v.season_stats.offensive_stats.service_aces);
+                    total["SE"] = determineSum(total["SE"], v.season_stats.offensive_stats.service_errors);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.sp}</td>
+                                <td class="text-center">${v.mp}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.kills}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.kills_per_set}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.errors}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.total_attempts}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.hitting_percentage}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.assists}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.assists_per_set}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.service_aces}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.service_aces_per_set}</td>
+                                <td class="text-center">${v.season_stats.offensive_stats.service_errors}</td>
+                        	</tr>
+                        </tr>`;
+
+            }
+            html += `</tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="text-center">${total["SP"]}</td>
+                                <td class="text-center">${total["MP"]}</td>
+                                <td class="text-center">${total["K"]}</td>
+                                <td class="text-center">${(total["K"] / total["SP"]).toFixed(2)}</td>
+                                <td class="text-center">${total["E"]}</td>
+                                <td class="text-center">${total["TA"]}</td>
+                                <td class="text-center">${total["HP"]}</td>
+                                <td class="text-center">${total["A"]}</td>
+                                <td class="text-center">${(total["A"] / total["SP"]).toFixed(2)}</td>
+                                <td class="text-center">${total["SA"]}</td>
+                                <td class="text-center">${(total["SA"] / total["SP"]).toFixed(2)}</td>
+                                <td class="text-center">${total["SE"]}</td>
+                            </tr>
+                        </tfoot>`;
+            html += `</table>
+                        </div>
+                    </section>`;
+
+            initial = true;
+
+            html += `<section class="sidearm-section-label-fixed">`;
+            html += `<h5>Defensive Statistics</h5>`;
+            html += `<div class="sidearm-table-overflow-on-medium">
+                        <table class="sidearm-table">
+                            <caption class="hide">Defensive Statistics</caption>
+                            <thead>
+                                <tr>
+                                    <th class="text-hide">Season</th>
+                                    <th scope="col" class="text-center">DIG</th>
+                                    <th scope="col" class="text-center">D/S</th>
+                                    <th scope="col" class="text-center">RE</th>
+                                    <th scope="col" class="text-center">BS</th>
+                                    <th scope="col" class="text-center">BA</th>
+                                    <th scope="col" class="text-center">TB</th>
+                                    <th scope="col" class="text-center">B/S</th>
+                                    <th scope="col" class="text-center">BE</th>
+                                    <th scope="col" class="text-center">BHE</th>
+                                    <th scope="col" class="text-center">PTS</th>
+                                    <th scope="col" class="text-center">PTS/S</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            for (const [k, v] of Object.entries(response).sort((a, b) => a[0].localeCompare(b[0]))) {
+                if (v.sp === "0") continue;
+
+                if (initial) {
+                    total = {
+                        "SP": v.sp,
+                        "DIG": v.season_stats.defensive_stats.dig,
+                        "RE": v.season_stats.defensive_stats.receiving_erros,
+                        "BS": v.season_stats.defensive_stats.solo_blocks,
+                        "BA": v.season_stats.defensive_stats.assist_blocks,
+                        "TB": v.season_stats.defensive_stats.total_blocks,
+                        "BE": v.season_stats.defensive_stats.blocking_error,
+                        "BHE": v.season_stats.defensive_stats.ball_handling_error,
+                        "PTS": v.season_stats.defensive_stats.pts
+                    };
+                    initial = false;
+                } else {
+                    total["SP"] = determineSum(total["SP"], v.sp);
+                    total["DIG"] = determineSum(total["DIG"], v.season_stats.defensive_stats.dig);
+                    total["RE"] = determineSum(total["RE"], v.season_stats.defensive_stats.receiving_erros);
+                    total["BS"] = determineSum(total["BS"], v.season_stats.defensive_stats.solo_blocks);
+                    total["BA"] = determineSum(total["BA"], v.season_stats.defensive_stats.assist_blocks);
+                    total["TB"] = determineSum(total["TB"], v.season_stats.defensive_stats.total_blocks);
+                    total["BE"] = determineSum(total["BE"], v.season_stats.defensive_stats.blocking_error);
+                    total["BHE"] = determineSum(total["BHE"], v.season_stats.defensive_stats.ball_handling_error);
+                    total["PTS"] = determineSum(total["PTS"], v.season_stats.defensive_stats.pts);
+                }
+                html += `<tr>
+                            <th scope="row" class="text-no-wrap" data-source="${v.source}">${k}</th>
+                                <td class="text-center">${v.season_stats.defensive_stats.dig}</td>
+                                <td class="text-center">${Number(v.season_stats.defensive_stats.digs_per_set).toFixed(2)}</td>
+                                <td class="text-center">${v.season_stats.defensive_stats.receiving_erros}</td>
+                                <td class="text-center">${v.season_stats.defensive_stats.solo_blocks}</td>
+                                <td class="text-center">${v.season_stats.defensive_stats.assist_blocks}</td>
+                                <td class="text-center">${v.season_stats.defensive_stats.total_blocks}</td>
+                                <td class="text-center">${Number(v.season_stats.defensive_stats.total_blocks_per_set)}</td>
+                                <td class="text-center">${v.season_stats.defensive_stats.blocking_error}</td>
+                                <td class="text-center">${v.season_stats.defensive_stats.ball_handling_error}</td>
+                                <td class="text-center">${Number(v.season_stats.defensive_stats.pts).toFixed(1)}</td>
+                                <td class="text-center">${Number(v.season_stats.defensive_stats.pts_per_set).toFixed(2)}</td>
+                            </th>
+                    	</tr>`;
+            }
+            html += `</tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="text-center">${total["DIG"]}</td>
+                                <td class="text-center">${(total["DIG"] / total["SP"]).toFixed(2)}</td>
+                                <td class="text-center">${total["RE"]}</td>
+                                <td class="text-center">${total["BS"]}</td>
+                                <td class="text-center">${total["BA"]}</td>
+                                <td class="text-center">${total["TB"]}</td>
+                                <td class="text-center">${(total["TB"] / total["SP"]).toFixed(1)}</td>
+                                <td class="text-center">${total["BE"]}</td>
+                                <td class="text-center">${total["BHE"]}</td>
+                                <td class="text-center">${Number(total["PTS"]).toFixed(1)}</td>
+                                <td class="text-center">${(total["PTS"] / total["SP"]).toFixed(2)}</td>
+                            </tr>
+                        </tfoot>`;
+            html += `</table>
+                            </div>
+                        </section>`;
+        } else {
+            html = "There are no statistics available for this player.";
+        }
+    }
+
+    return html;
+}

@@ -4,7 +4,7 @@
     "href": "blog-listing.html",
     "title": "Insightful Analytics",
     "section": "",
-    "text": "Order By\n       Default\n         \n          Title\n        \n         \n          Date - Oldest\n        \n         \n          Date - Newest\n        \n         \n          Author\n        \n     \n  \n    \n      \n      \n    \n\n\n\n\n  \n\n\n\n\nBeer Markets\n\n\n\n\n\n\n\n\n\nNov 2, 2023\n\n\nAlex Ventresca\n\n\n8 min\n\n\n\n\n\n\n  \n\n\n\n\nSpotify\n\n\n\n\n\n\n\n\n\nOct 30, 2023\n\n\nAlex Ventresca\n\n\n1 min\n\n\n\n\n\n\n  \n\n\n\n\nRestaurant\n\n\n\n\n\n\n\n\n\nOct 30, 2023\n\n\nAlex Ventresca\n\n\n1 min\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\n\n\nOct 27, 2023\n\n\nYOUR NAME\n\n\n0 min\n\n\n\n\n\n\nNo matching items"
+    "text": "Order By\n       Default\n         \n          Title\n        \n         \n          Date - Oldest\n        \n         \n          Date - Newest\n        \n         \n          Author\n        \n     \n  \n    \n      \n      \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\nHomework 5\n\n\n\n\n\n\n\n\n\n1 min\n\n\n\n\n\n\n  \n\n\n\n\nBeer Markets\n\n\n\n\n\n\n\n\n\nNov 2, 2023\n\n\nAlex Ventresca\n\n\n8 min\n\n\n\n\n\n\n  \n\n\n\n\nSpotify\n\n\n\n\n\n\n\n\n\nOct 30, 2023\n\n\nAlex Ventresca\n\n\n1 min\n\n\n\n\n\n\n  \n\n\n\n\nRestaurant\n\n\n\n\n\n\n\n\n\nOct 30, 2023\n\n\nAlex Ventresca\n\n\n1 min\n\n\n\n\n\n\n  \n\n\n\n\nQuestion 2\n\n\n\n\n\n\n\n\n\nOct 30, 2023\n\n\nAlex Ventresca\n\n\n1 min\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\n\n\nOct 27, 2023\n\n\nAlex Ventresca\n\n\n0 min\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "index.html",
@@ -70,9 +70,23 @@
     "text": "Promotional Impact\nWe’ll assess the impact of promotions on the quantity of beer purchased. For this analysis, we can calculate the average quantity purchased with and without promotions and visualize the difference. We’ll do this for each brand to see which brands are most affected by promotions.\nLet’s begin this analysis by looking at the average quantity purchased with and without promotions for each brand.\n\n# Calculate average quantity purchased with and without promotions for each brand\npromo_impact = beer_data.groupby(['brand', 'promo']).agg({'quantity':'mean'}).reset_index()\n\n# Pivot the data to have promo and non-promo side by side for each brand\npromo_impact_pivot = promo_impact.pivot(index='brand', columns='promo', values='quantity').reset_index()\npromo_impact_pivot.columns = ['brand', 'non_promo', 'promo']\n\n# Calculate the difference in average quantity purchased between promo and non-promo\npromo_impact_pivot['promo_impact'] = promo_impact_pivot['promo'] - promo_impact_pivot['non_promo']\n\n# Sort by the impact of promo\npromo_impact_pivot_sorted = promo_impact_pivot.sort_values('promo_impact', ascending=False)\n\n# Plotting the difference in average quantity purchased between promo and non-promo for each brand\nplt.figure(figsize=(12, 10))\nsns.barplot(x='promo_impact', y='brand', data=promo_impact_pivot_sorted, palette='viridis')\nplt.title('Impact of Promotions on Average Quantity Purchased by Brand')\nplt.xlabel('Difference in Average Quantity Purchased (Promo - Non-Promo)')\nplt.ylabel('Brand')\nplt.show()\n\n\n\n\nThe bar chart illustrates the impact of promotions on the average quantity of beer purchased by brand. A positive value indicates that, on average, more beer is purchased when there is a promotion compared to when there isn’t. Some brands appear to be significantly more influenced by promotions, with customers buying more when the products are on sale or promotion.\nThis comprehensive analysis has provided insights into purchase patterns, demographic preferences, price sensitivity, and the impact of promotions on beer purchases."
   },
   {
+    "objectID": "posts/Homework-5/danl200-hw5-VENTRESCA-ALEXANDRA.html",
+    "href": "posts/Homework-5/danl200-hw5-VENTRESCA-ALEXANDRA.html",
+    "title": "Homework 5",
+    "section": "",
+    "text": "#Question 1\nQ1a\n\n#answer\n\nQ1b\n\n#n/a\n\nQ1c\n\n#answer\n\n#Question 2 NFL in 2022\nQ2a\n\n#answer\n\nQ2b\n\n#answer\n\nQ2c\n\n#answer\n\nQ2d\n\n#answer\n\nQ2e\n\n#answer\n\nQ2f\n\n#answer\n\nQ2g\n\n#answer"
+  },
+  {
+    "objectID": "posts/question2/HW5question2.html",
+    "href": "posts/question2/HW5question2.html",
+    "title": "Question 2",
+    "section": "",
+    "text": "Data Frame\n\nNFL2022_stuffs <- read_csv('https://bcdanl.github.io/data/NFL2022_stuffs.csv')\nview(NFL2022_stuffs)\n\nq2a. In data.frame, NFL2022_stuffs, remove observations for which values of posteam is missing."
+  },
+  {
     "objectID": "posts/restaurant/restaurant.html",
     "href": "posts/restaurant/restaurant.html",
-    "title": "Starwars",
+    "title": "Restaurant",
     "section": "",
     "text": "Let’s analyze the res data:\n\nres <- read_csv(\"https://bcdanl.github.io/data/DOHMH_NYC_Restaurant_Inspection.csv\")\n\nrmarkdown::paged_table(res)"
   },
@@ -88,28 +102,28 @@
     "href": "posts/welcome/index.html",
     "title": "Welcome To My Blog",
     "section": "",
-    "text": "This is the first post in a Quarto blog. Welcome!\n\nSince this post doesn’t specify an explicit image, the first image in the post will be used in the listing page of posts."
+    "text": "This is the first post in a Quarto blog. Welcome!"
   },
   {
     "objectID": "project.html",
     "href": "project.html",
     "title": "DANL Project",
     "section": "",
-    "text": "About this project 👏\n\n1+1\n\n[1] 2"
+    "text": "About this project 👏\nThis project will address the various financial actions taken by various parties to address climate change."
   },
   {
     "objectID": "project.html#summary-statistics",
     "href": "project.html#summary-statistics",
     "title": "DANL Project",
-    "section": "2.1 Summary Statistics",
-    "text": "2.1 Summary Statistics\n\nmpg <- ggplot2::mpg\n\n\n\n\n  \n\n\n\nskim(mpg) %>% \n  select(-n_missing)\n\n\nData summary\n\n\nName\nmpg\n\n\nNumber of rows\n234\n\n\nNumber of columns\n11\n\n\n_______________________\n\n\n\nColumn type frequency:\n\n\n\ncharacter\n6\n\n\nnumeric\n5\n\n\n________________________\n\n\n\nGroup variables\nNone\n\n\n\nVariable type: character\n\n\n\nskim_variable\ncomplete_rate\nmin\nmax\nempty\nn_unique\nwhitespace\n\n\n\n\nmanufacturer\n1\n4\n10\n0\n15\n0\n\n\nmodel\n1\n2\n22\n0\n38\n0\n\n\ntrans\n1\n8\n10\n0\n10\n0\n\n\ndrv\n1\n1\n1\n0\n3\n0\n\n\nfl\n1\n1\n1\n0\n5\n0\n\n\nclass\n1\n3\n10\n0\n7\n0\n\n\n\nVariable type: numeric\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\ncomplete_rate\nmean\nsd\np0\np25\np50\np75\np100\nhist\n\n\n\n\ndispl\n1\n3.47\n1.29\n1.6\n2.4\n3.3\n4.6\n7\n▇▆▆▃▁\n\n\nyear\n1\n2003.50\n4.51\n1999.0\n1999.0\n2003.5\n2008.0\n2008\n▇▁▁▁▇\n\n\ncyl\n1\n5.89\n1.61\n4.0\n4.0\n6.0\n8.0\n8\n▇▁▇▁▇\n\n\ncty\n1\n16.86\n4.26\n9.0\n14.0\n17.0\n19.0\n35\n▆▇▃▁▁\n\n\nhwy\n1\n23.44\n5.95\n12.0\n18.0\n24.0\n27.0\n44\n▅▅▇▁▁"
+    "section": "3.1 Summary Statistics",
+    "text": "3.1 Summary Statistics\n\npath <- 'https://bcdanl.github.io/data/climate_finance_energy.csv'\nclimate_finance <- read_csv(path)\n\n#| results: asis\n#| echo: false\nrmarkdown::paged_table(climate_finance) \n\n\n\n  \n\n\n\n\nskim(mpg) %>% \n  select(-n_missing)\n\n\nData summary\n\n\nName\nmpg\n\n\nNumber of rows\n234\n\n\nNumber of columns\n11\n\n\n_______________________\n\n\n\nColumn type frequency:\n\n\n\ncharacter\n6\n\n\nnumeric\n5\n\n\n________________________\n\n\n\nGroup variables\nNone\n\n\n\nVariable type: character\n\n\n\nskim_variable\ncomplete_rate\nmin\nmax\nempty\nn_unique\nwhitespace\n\n\n\n\nmanufacturer\n1\n4\n10\n0\n15\n0\n\n\nmodel\n1\n2\n22\n0\n38\n0\n\n\ntrans\n1\n8\n10\n0\n10\n0\n\n\ndrv\n1\n1\n1\n0\n3\n0\n\n\nfl\n1\n1\n1\n0\n5\n0\n\n\nclass\n1\n3\n10\n0\n7\n0\n\n\n\nVariable type: numeric\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nskim_variable\ncomplete_rate\nmean\nsd\np0\np25\np50\np75\np100\nhist\n\n\n\n\ndispl\n1\n3.47\n1.29\n1.6\n2.4\n3.3\n4.6\n7\n▇▆▆▃▁\n\n\nyear\n1\n2003.50\n4.51\n1999.0\n1999.0\n2003.5\n2008.0\n2008\n▇▁▁▁▇\n\n\ncyl\n1\n5.89\n1.61\n4.0\n4.0\n6.0\n8.0\n8\n▇▁▇▁▇\n\n\ncty\n1\n16.86\n4.26\n9.0\n14.0\n17.0\n19.0\n35\n▆▇▃▁▁\n\n\nhwy\n1\n23.44\n5.95\n12.0\n18.0\n24.0\n27.0\n44\n▅▅▇▁▁"
   },
   {
     "objectID": "project.html#mpg-and-a-type-of-cars",
     "href": "project.html#mpg-and-a-type-of-cars",
     "title": "DANL Project",
-    "section": "2.2 MPG and a Type of Cars",
-    "text": "2.2 MPG and a Type of Cars\nThe following boxplot shows how the distribution of highway MPG (hwy) varies by a type of cars (class) 🚙 🚚 🚐.\n\nggplot(data = mpg) +\n  geom_boxplot(aes(x = class, y = hwy, fill = class),\n               show.legend = F) +\n  labs(x = \"Class\", y = \"Highway\\nMPG\")"
+    "section": "3.2 MPG and a Type of Cars",
+    "text": "3.2 MPG and a Type of Cars\nThe following boxplot shows how the distribution of highway MPG (hwy) varies by a type of cars (class) 🚙 🚚 🚐.\n\nggplot(data = mpg) +\n  geom_boxplot(aes(x = class, y = hwy, fill = class),\n               show.legend = F) +\n  labs(x = \"Class\", y = \"Highway\\nMPG\")"
   },
   {
     "objectID": "quarto-template (2).html",

@@ -1,0 +1,14 @@
+{
+  "hash": "8ccd31cbfbaacabab703a0763468b47e",
+  "result": {
+    "markdown": "---\ntitle: \"Question 2\"\nauthor: \"Alex Ventresca\"\ndate: \"2023-10-30\"\ncategories: [NFL-IN-2022]\nimage: \"restaurant1.jpg\"\n\nexecute: \n  warning: false\n  message: false\n  \ntoc: true\n---\n\n\n\n\nData Frame\n\n\n::: {.cell}\n\n```{.r .cell-code}\nNFL2022_stuffs <- read_csv('https://bcdanl.github.io/data/NFL2022_stuffs.csv')\nview(NFL2022_stuffs)\n```\n:::\n\n\nq2a. \n  In data.frame, NFL2022_stuffs, remove observations for which values of posteam is missing.\n\n::: {.cell}\n\n:::",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

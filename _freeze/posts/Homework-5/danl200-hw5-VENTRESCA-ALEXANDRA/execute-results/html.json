@@ -1,0 +1,14 @@
+{
+  "hash": "9916c7b45429c14ecb1b7270158277a4",
+  "result": {
+    "markdown": "---\ntitle: \"danl200-hw5-VENTRESCA-ALEXANDRA.qmd\"\neditor: visual\n---\n\n---\ntitle: \"Homework 5\"\nauthor: \"Alex Ventresca\"\ndate: \"2023-10-30\"\ncategories: [restaurant, spotify, beer_markets]\nimage: \"profilepic.jpg\"\n\nexecute: \n  warning: false\n  message: false\n  \ntoc: true\n---\n\n\n\n\n#Question 1\n\nQ1a\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\nQ1b\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#n/a\n```\n:::\n\n\nQ1c\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\n#Question 2 NFL in 2022\n\nQ2a\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\nQ2b\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\nQ2c\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\nQ2d\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\nQ2e\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\nQ2f\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n\n\nQ2g\n\n\n::: {.cell}\n\n```{.r .cell-code}\n#answer\n```\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
