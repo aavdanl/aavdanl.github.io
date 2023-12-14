@@ -116,10 +116,14 @@ For both sectors (energy and non-energy), the amount of the committed funding ha
 
 
 ```{r}
-ggplot(climate_finance,
-       aes(color = `Type of support`, x = log(Contribution))) +
-  geom_freqpoly() +
-  facet_wrap(.~ Status) 
+climate_finance %>% 
+  group_by(Energy, Status, Year) %>% 
+  summarise(funding_tot = sum(Contribution, na.rm = T)) %>% 
+  ggplot(aes(x = Year, y = funding_tot)) +
+  geom_line(aes(color = Status)) +
+  geom_point() +
+  facet_wrap(Energy ~.) +
+  scale_y_comma()
 ```
 
 
@@ -164,6 +168,6 @@ ggplot(climate_finance,
   facet_wrap(.~ Status)
 ```
 
-#Summary
+# Summary
 
 There is not one set path or action to take to solve the climate change crisis, as demonstrated by the various amounts and types of funding actions. Climate finance is a complicated subject, but to solve the problem, more action (such as actually providing funds instead of just committing to it) is needed by all parties. 

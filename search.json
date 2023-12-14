@@ -123,7 +123,7 @@
     "href": "project.html#yearly-contribution-varying-by-energy-and-status",
     "title": "DANL Project",
     "section": "3.3 Yearly Contribution varying by Energy and Status",
-    "text": "3.3 Yearly Contribution varying by Energy and Status\nFor both sectors (energy and non-energy), the amount of the committed funding has been increasing yearly, while the amount of provided funding has stayed relatively constant. Energy related projects usually require a much greater upfront cost than non-energy related projects, hence why there is a gap for the provided amounts.\n\nggplot(climate_finance,\n       aes(color = `Type of support`, x = log(Contribution))) +\n  geom_freqpoly() +\n  facet_wrap(.~ Status)"
+    "text": "3.3 Yearly Contribution varying by Energy and Status\nFor both sectors (energy and non-energy), the amount of the committed funding has been increasing yearly, while the amount of provided funding has stayed relatively constant. Energy related projects usually require a much greater upfront cost than non-energy related projects, hence why there is a gap for the provided amounts.\n\nclimate_finance %>% \n  group_by(Energy, Status, Year) %>% \n  summarise(funding_tot = sum(Contribution, na.rm = T)) %>% \n  ggplot(aes(x = Year, y = funding_tot)) +\n  geom_line(aes(color = Status)) +\n  geom_point() +\n  facet_wrap(Energy ~.) +\n  scale_y_comma()"
   },
   {
     "objectID": "project.html#distribution-of-ratio-between-adaptation-and-mitigation-contributions",
@@ -137,7 +137,7 @@
     "href": "project.html#contribution-varying-by-type-of-support-and-status",
     "title": "DANL Project",
     "section": "3.5 Contribution varying by Type of Support and Status",
-    "text": "3.5 Contribution varying by Type of Support and Status\nFor the amount of countries that have committed to support climate funding, meaning they have pledged to pay but have not actually provided any funding, the count is similar for adaptation versus mitigation projects. For countries that have actually provided contribution funds, the count is much higher for adaptation projects compared to mitigation projects.\n\nggplot(climate_finance,\n       aes(color = `Type of support`, x = log(Contribution))) +\n  geom_freqpoly() +\n  facet_wrap(.~ Status)\n\n\n\n\n#Summary\nThere is not one set path or action to take to solve the climate change crisis, as demonstrated by the various amounts and types of funding actions. Climate finance is a complicated subject, but to solve the problem, more action (such as actually providing funds instead of just committing to it) is needed by all parties."
+    "text": "3.5 Contribution varying by Type of Support and Status\nFor the amount of countries that have committed to support climate funding, meaning they have pledged to pay but have not actually provided any funding, the count is similar for adaptation versus mitigation projects. For countries that have actually provided contribution funds, the count is much higher for adaptation projects compared to mitigation projects.\n\nggplot(climate_finance,\n       aes(color = `Type of support`, x = log(Contribution))) +\n  geom_freqpoly() +\n  facet_wrap(.~ Status)"
   },
   {
     "objectID": "quarto-template (2).html",
