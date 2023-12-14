@@ -57,22 +57,16 @@ Recipient country/region: Recipient country or region
 
 Project/programme/activity: Details in the climate change project
 
-Type of support:
+Type of support:adaptation if the climate change project is related to adaptation project. mitigation if the climate change project is related to mitigation project.
 
-adaptation if the climate change project is related to adaptation project.
-mitigation if the climate change project is related to mitigation project.
 Year: Year that funding contribution is committed or provided.
 
 Contribution: An amount of funding contribution for the climate change project (in USD).
 
-Status:
-
-committed if a party commits to providing the funding contribution for the climate change project, but the funding contribution is NOT actually provided.
+Status: committed if a party commits to providing the funding contribution for the climate change project, but the funding contribution is NOT actually provided.
 provided if the funding contribution was provided for the climate change project.
-Energy:
 
-TRUE if the project is energy-related;
-FALSE otherwise.
+Energy: TRUE if the project is energy-related; FALSE otherwise.
 
 # Data
 
@@ -122,10 +116,10 @@ For both sectors (energy and non-energy), the amount of the committed funding ha
 
 
 ```{r}
-ggplot(data = mpg) +
-  geom_boxplot(aes(x = class, y = hwy, fill = class),
-               show.legend = F) +
-  labs(x = "Class", y = "Highway\nMPG") 
+ggplot(climate_finance,
+       aes(color = `Type of support`, x = log(Contribution))) +
+  geom_freqpoly() +
+  facet_wrap(.~ Status) 
 ```
 
 
@@ -170,3 +164,6 @@ ggplot(climate_finance,
   facet_wrap(.~ Status)
 ```
 
+#Summary
+
+There is not one set path or action to take to solve the climate change crisis, as demonstrated by the various amounts and types of funding actions. Climate finance is a complicated subject, but to solve the problem, more action (such as actually providing funds instead of just committing to it) is needed by all parties. 

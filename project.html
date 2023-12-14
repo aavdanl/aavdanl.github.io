@@ -227,12 +227,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>Party: a party (country) that provides a funding contribution to recipient country/region for their cliamte change project.</p>
 <p>Recipient country/region: Recipient country or region</p>
 <p>Project/programme/activity: Details in the climate change project</p>
-<p>Type of support:</p>
-<p>adaptation if the climate change project is related to adaptation project. mitigation if the climate change project is related to mitigation project. Year: Year that funding contribution is committed or provided.</p>
+<p>Type of support:adaptation if the climate change project is related to adaptation project. mitigation if the climate change project is related to mitigation project.</p>
+<p>Year: Year that funding contribution is committed or provided.</p>
 <p>Contribution: An amount of funding contribution for the climate change project (in USD).</p>
-<p>Status:</p>
-<p>committed if a party commits to providing the funding contribution for the climate change project, but the funding contribution is NOT actually provided. provided if the funding contribution was provided for the climate change project. Energy:</p>
-<p>TRUE if the project is energy-related; FALSE otherwise.</p>
+<p>Status: committed if a party commits to providing the funding contribution for the climate change project, but the funding contribution is NOT actually provided. provided if the funding contribution was provided for the climate change project.</p>
+<p>Energy: TRUE if the project is energy-related; FALSE otherwise.</p>
 </section>
 <section id="data" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Data</h1>
@@ -473,10 +472,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 data-number="3.3" class="anchored" data-anchor-id="yearly-contribution-varying-by-energy-and-status"><span class="header-section-number">3.3</span> Yearly Contribution varying by Energy and Status</h2>
 <p>For both sectors (energy and non-energy), the amount of the committed funding has been increasing yearly, while the amount of provided funding has stayed relatively constant. Energy related projects usually require a much greater upfront cost than non-energy related projects, hence why there is a gap for the provided amounts.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> mpg) <span class="sc">+</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> class, <span class="at">y =</span> hwy, <span class="at">fill =</span> class),</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">show.legend =</span> F) <span class="sc">+</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Class"</span>, <span class="at">y =</span> <span class="st">"Highway</span><span class="sc">\n</span><span class="st">MPG"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(climate_finance,</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">color =</span> <span class="st">`</span><span class="at">Type of support</span><span class="st">`</span>, <span class="at">x =</span> <span class="fu">log</span>(Contribution))) <span class="sc">+</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_freqpoly</span>() <span class="sc">+</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(.<span class="sc">~</span> Status) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="project_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="864"></p>
 </div>
@@ -525,6 +524,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><img src="project_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="864"></p>
 </div>
 </div>
+<p>#Summary</p>
+<p>There is not one set path or action to take to solve the climate change crisis, as demonstrated by the various amounts and types of funding actions. Climate finance is a complicated subject, but to solve the problem, more action (such as actually providing funds instead of just committing to it) is needed by all parties.</p>
 
 
 </section>
